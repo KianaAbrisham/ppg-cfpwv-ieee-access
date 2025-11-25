@@ -1,4 +1,23 @@
-import os
+"""
+paper_code.py
+
+Reproducible pipeline for:
+- PPG/SDPPG feature extraction
+- Age correlation analysis (Pearson r, p-values)
+- cf-PWV estimation using XGBoost (cross-validation + diagnostics)
+
+Expected local files (NOT tracked in git) in ./data/
+- PWs_Digital_PPG.csv
+- PWs_Radial_PPG.csv
+- PWs_Brachial_PPG.csv
+- digfeatures.csv
+- radfeature.csv
+- brachfeatures.csv
+- PWV.csv
+
+Outputs will be saved in ./outputs/figures and ./outputs/tables (NOT tracked in git).
+"""
+
 from pathlib import Path
 
 import numpy as np
@@ -17,6 +36,7 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.inspection import permutation_importance
 from xgboost import XGBRegressor
 
+
 # ========================== CONFIG & CONSTANTS ==========================
 FS = 500                     # Sampling rate (Hz)
 RANDOM_STATE = 42
@@ -24,7 +44,6 @@ ALPHA_P = 0.05               # significance threshold for correlations
 
 # PIR parameters (definition agreed)
 PIR_WINDOW_MS = 10           # Δt for PIR (ms) — FIXED across subjects
-PIR_SMOOTH = True            # (placeholder) optional smoothing flag
 
 # Internal, descriptive names (stay in CSVs); plots map them to short labels
 AMP_COL = "Amplitude (median amplitude; 0.5H)"  # plotted as "Amplitude"
@@ -34,22 +53,23 @@ PIR_COL = f"PIR (Peak-to-Instantaneous Ratio; Δt={PIR_WINDOW_MS} ms)"  # plotte
 # Put your CSV files locally in a folder named "data/" next to this script.
 # This repo should not upload the dataset; outputs should go to "outputs/".
 DATA_DIR = Path("data")
-OUT_DIR  = Path("outputs")
+OUT_DIR = Path("outputs")
 
 FIG_OUT_DIR = OUT_DIR / "figures"
 TAB_OUT_DIR = OUT_DIR / "tables"
 FIG_OUT_DIR.mkdir(parents=True, exist_ok=True)
 TAB_OUT_DIR.mkdir(parents=True, exist_ok=True)
 
-DIG_PWS_CSV   = DATA_DIR / "PWs_Digital_PPG.csv"
-RAD_PWS_CSV   = DATA_DIR / "PWs_Radial_PPG.csv"
+DIG_PWS_CSV = DATA_DIR / "PWs_Digital_PPG.csv"
+RAD_PWS_CSV = DATA_DIR / "PWs_Radial_PPG.csv"
 BRACH_PWS_CSV = DATA_DIR / "PWs_Brachial_PPG.csv"
 
-DIG_IDX_CSV   = DATA_DIR / "digfeatures.csv"
-RAD_IDX_CSV   = DATA_DIR / "radfeature.csv"
+DIG_IDX_CSV = DATA_DIR / "digfeatures.csv"
+RAD_IDX_CSV = DATA_DIR / "radfeature.csv"
 BRACH_IDX_CSV = DATA_DIR / "brachfeatures.csv"
 
-PWV_CSV       = DATA_DIR / "PWV.csv"
+PWV_CSV = DATA_DIR / "PWV.csv"
+
 
 # ============================== DISPLAY ==============================
 mpl.rcParams.update({
@@ -59,9 +79,8 @@ mpl.rcParams.update({
     "mathtext.rm": "Times New Roman",
     "mathtext.it": "Times New Roman:italic",
     "mathtext.bf": "Times New Roman:bold",
-    "mathtext.default": "it",   # was "regular"
+    "mathtext.default": "it",
 })
-
 
 # ============================== DISPLAY NAMES (canonical) ==============================
 DISPLAY_NAME = {
@@ -78,15 +97,15 @@ DISPLAY_NAME = {
     "Downslope Length": "Downslope Length",
     "Upslope": "Upslope",
     "Downslope": "Downslope",
-    "Onset-End Slope": "Onset–End Slope",                 # ← display with en dash
+    "Onset-End Slope": "Onset–End Slope",
     "Slope Ratio": "Slope Ratio",
-    "Length-Height Ratio": "Length–Height Ratio",         # ← display with en dash
-    "Slope Length Ratio": "Slope–Length Ratio",           # ← display with en dash
-    "Upslope Length Ratio": "Upslope–Length Ratio",       # ← display with en dash
-    "Downslope Length Ratio": "Downslope–Length Ratio",   # ← display with en dash
+    "Length-Height Ratio": "Length–Height Ratio",
+    "Slope Length Ratio": "Slope–Length Ratio",
+    "Upslope Length Ratio": "Upslope–Length Ratio",
+    "Downslope Length Ratio": "Downslope–Length Ratio",
     "Start Datum Area": "Start Datum Area",
     "End Datum Area": "End Datum Area",
-    "Datum Area Ratio": "Datum–Area Ratio",               # ← display with en dash
+    "Datum Area Ratio": "Datum–Area Ratio",
     "Max Start Datum Diff.": "Maximum Start Datum Difference",
     "Max End Datum Diff.": "Maximum End Datum Difference",
     "Med. Start Datum Diff.": "Median Start Datum Difference",
@@ -103,13 +122,13 @@ DISPLAY_NAME = {
     "SI": "Stiffness Index (SI)",
     "RI": "Reflection Index (RI)",
 
-    # SDPPG amplitudes (math italic)
+    # SDPPG amplitudes
     "b/a": r"$b/a$",
     "c/a": r"$c/a$",
     "d/a": r"$d/a$",
     "e/a": r"$e/a$",
 
-    # SDPPG slopes (math italic for symbols + subscripts)
+    # SDPPG slopes
     "slope_a-b": r"$\mathrm{slope}_{a-b}$",
     "slope_a-c": r"$\mathrm{slope}_{a-c}$",
     "slope_a-d": r"$\mathrm{slope}_{a-d}$",
@@ -120,7 +139,7 @@ DISPLAY_NAME = {
     "slope_c-e": r"$\mathrm{slope}_{c-e}$",
     "slope_d-e": r"$\mathrm{slope}_{d-e}$",
 
-    # SDPPG intervals (math italic)
+    # SDPPG intervals
     "t_a-b": r"$t_{a-b}$",
     "t_a-c": r"$t_{a-c}$",
     "t_a-d": r"$t_{a-d}$",
@@ -135,10 +154,9 @@ DISPLAY_NAME = {
     # SDPPG aging indices (upright multi-letter subscript)
     "AGI_int": r"$\mathrm{AGI}_{\mathrm{int}}$",
     "AGI_mod": r"$\mathrm{AGI}_{\mathrm{mod}}$",
-
 }
 
-USE_SHORT_LABELS = True  # ← toggle here
+USE_SHORT_LABELS = True
 
 DISPLAY_NAME_SHORT = {
     "AUC": "AUC",
@@ -177,7 +195,7 @@ DISPLAY_NAME_SHORT = {
     "SI": "SI",
     "RI": "RI",
 
-    # Math (unchanged – already italic via TeX)
+    # TeX unchanged
     "b/a": r"$b/a$", "c/a": r"$c/a$", "d/a": r"$d/a$", "e/a": r"$e/a$",
     "slope_a-b": r"$\mathrm{slope}_{a-b}$",
     "slope_a-c": r"$\mathrm{slope}_{a-c}$",
@@ -274,6 +292,8 @@ DISPLAY_UNITS = {
     "AGI_mod": "AGI (a.u.)",
 }
 
+def unit_for(feature_key: str) -> str:
+    return DISPLAY_UNITS.get(feature_key, "Value (unit)")
 
 # ---------- Styling for figures ----------
 LINE_LW = 6
@@ -282,13 +302,18 @@ TITLE_FS = 38
 AXLABEL_FS = 34
 TICK_FS = 33
 LEGEND_FS = 40
-POS = "#009E73"; NEG = "#8B3E8F"
+POS = "#009E73"
+NEG = "#8B3E8F"
+
 
 # ============================== HELPERS ==============================
-
-
-def unit_for(feature_key: str) -> str:
-    return DISPLAY_UNITS.get(feature_key, "Value (unit)")
+def _require_files(paths: list[Path]) -> None:
+    missing = [p for p in paths if not Path(p).exists()]
+    if missing:
+        msg = "\n".join(f"  - {p.as_posix()}" for p in missing)
+        raise FileNotFoundError(
+            "Missing input CSVs. Put the required files in ./data/ (see README) and try again:\n" + msg
+        )
 
 def width_at_level(t, x, level):
     t = np.asarray(t); x = np.asarray(x)
@@ -306,7 +331,7 @@ def calculate_pir(signal):
     x = np.asarray(signal, dtype=float)
     if x.size < 2 or not np.isfinite(x).any():
         return np.nan
-    d = np.diff(x)                     # numerator
+    d = np.diff(x)
     num = np.nanmax(np.abs(d))
     den = np.nanmean(np.abs(x))
     if not np.isfinite(den) or den == 0:
@@ -322,16 +347,15 @@ def get_indices_row(indices_df: pd.DataFrame, subject_number: int) -> pd.Series:
         if row.empty:
             raise KeyError(f"Subject {subject_number} not found in indices file.")
         return row.iloc[0]
-    else:
-        return indices_df.iloc[subject_number - 1]
+    # fallback: assume row order matches subject_number starting from 1
+    return indices_df.iloc[subject_number - 1]
+
 
 # =========================== FEATURE BUILDING ===========================
-def build_feature_table(pws_df, indices_df, site_prefix: str):
-    idx_cols = {c: c.strip() for c in indices_df.columns}
-    indices_df = indices_df.rename(columns=idx_cols)
+def build_feature_table(pws_df, indices_df, site_prefix: str) -> pd.DataFrame:
+    indices_df = indices_df.rename(columns={c: c.strip() for c in indices_df.columns})
     rows = []
 
-    # Required fields to declare an index row "complete"
     req = [
         f"{site_prefix}_PPGsys_V", f"{site_prefix}_PPGsys_T",
         f"{site_prefix}_PPGdia_V", f"{site_prefix}_PPGdia_T",
@@ -345,12 +369,10 @@ def build_feature_table(pws_df, indices_df, site_prefix: str):
 
     for subject_number in pws_df["Subject Number"].unique():
         try:
-            # Pre-screen completeness
             idx = get_indices_row(indices_df, subject_number)
             if any(pd.isna(idx.get(c)) for c in req):
                 continue
 
-            # Load waveform (single pulse)
             row_sig = pws_df.loc[pws_df["Subject Number"] == subject_number].iloc[0]
             x = row_sig.iloc[2:].dropna().astype(float).to_numpy()
             if x.size < 5:
@@ -361,35 +383,36 @@ def build_feature_table(pws_df, indices_df, site_prefix: str):
             sys_v = idx[f"{site_prefix}_PPGsys_V"]; sys_t = idx[f"{site_prefix}_PPGsys_T"]
             dia_v = idx[f"{site_prefix}_PPGdia_V"]; dia_t = idx[f"{site_prefix}_PPGdia_T"]
 
-            sys_mask = t <= sys_t; dia_mask = t >= sys_t
+            sys_mask = t <= sys_t
+            dia_mask = t >= sys_t
             x_sys, t_sys = x[sys_mask], t[sys_mask]
             x_dia, t_dia = x[dia_mask], t[dia_mask]
 
             # Areas
             s_auc = simps(x_sys, t_sys)
             d_auc = simps(x_dia, t_dia)
-            auc   = simps(x, t)
+            auc = simps(x, t)
             auc_ratio = s_auc / d_auc if d_auc != 0 else np.nan
 
             # Timing
-            rise_time  = sys_t - t[0]
+            rise_time = sys_t - t[0]
             decay_time = t[-1] - sys_t
             rise_decay_ratio = decay_time / rise_time if rise_time != 0 else np.nan
 
             # Amplitude & widths
-            full_amp   = float(np.max(x) - np.min(x))
+            full_amp = float(np.max(x) - np.min(x))
             half_level = float(np.min(x) + full_amp / 2)
             half_peak_amp = full_amp / 2
-
             pulse_width = width_at_level(t, x, half_level)
 
-            # Phase-restricted widths (guards)
+            # Phase-restricted widths
             try:
                 f_sys = interp1d(t_sys, x_sys, kind="linear", bounds_error=True)
                 sys_candidates = [tt for tt in t_sys if f_sys(tt) >= half_level]
                 sys_width = sys_candidates[-1] - sys_candidates[0] if sys_candidates else np.nan
             except Exception:
                 sys_width = np.nan
+
             try:
                 f_dia = interp1d(t_dia, x_dia, kind="linear", bounds_error=True)
                 dia_candidates = [tt for tt in t_dia if f_dia(tt) >= half_level]
@@ -400,9 +423,9 @@ def build_feature_table(pws_df, indices_df, site_prefix: str):
             width_ratio = sys_width / dia_width if dia_width and dia_width != 0 else np.nan
 
             # Slopes/lengths
-            l_up   = float(np.hypot(sys_t - t[0], sys_v - x[0]))
+            l_up = float(np.hypot(sys_t - t[0], sys_v - x[0]))
             l_down = float(np.hypot(t[-1] - sys_t, x[-1] - sys_v))
-            slope_up   = (sys_v - x[0]) / rise_time  if rise_time  != 0 else np.nan
+            slope_up = (sys_v - x[0]) / rise_time if rise_time != 0 else np.nan
             slope_down = (x[-1] - sys_v) / decay_time if decay_time != 0 else np.nan
             onset_end_slope = (x[-1] - x[0]) / (t[-1] - t[0]) if (t[-1] - t[0]) != 0 else np.nan
             slope_ratio = slope_up / slope_down if slope_down and slope_down != 0 else np.nan
@@ -433,19 +456,26 @@ def build_feature_table(pws_df, indices_df, site_prefix: str):
             datum_area_ratio = start_area / end_area if end_area and end_area != 0 else np.nan
 
             # Stats & PIR
-            var = float(np.var(x)); skw = float(skew(x)); kurtv = float(kurtosis(x))
+            var = float(np.var(x))
+            skw = float(skew(x))
+            kurtv = float(kurtosis(x))
             pir = calculate_pir(x)
 
             # SI, RI
-            si = idx[f"{site_prefix}_SI"]; ri = idx[f"{site_prefix}_RI"]
+            si = idx[f"{site_prefix}_SI"]
+            ri = idx[f"{site_prefix}_RI"]
 
             # SDPPG a–e
-            aV, bV, cV, dV, eV = (idx[f"{site_prefix}_PPGa_V"], idx[f"{site_prefix}_PPGb_V"],
-                                  idx[f"{site_prefix}_PPGc_V"], idx[f"{site_prefix}_PPGd_V"],
-                                  idx[f"{site_prefix}_PPGe_V"])
-            aT, bT, cT, dT, eT = (idx[f"{site_prefix}_PPGa_T"], idx[f"{site_prefix}_PPGb_T"],
-                                  idx[f"{site_prefix}_PPGc_T"], idx[f"{site_prefix}_PPGd_T"],
-                                  idx[f"{site_prefix}_PPGe_T"])
+            aV, bV, cV, dV, eV = (
+                idx[f"{site_prefix}_PPGa_V"], idx[f"{site_prefix}_PPGb_V"],
+                idx[f"{site_prefix}_PPGc_V"], idx[f"{site_prefix}_PPGd_V"],
+                idx[f"{site_prefix}_PPGe_V"]
+            )
+            aT, bT, cT, dT, eT = (
+                idx[f"{site_prefix}_PPGa_T"], idx[f"{site_prefix}_PPGb_T"],
+                idx[f"{site_prefix}_PPGc_T"], idx[f"{site_prefix}_PPGd_T"],
+                idx[f"{site_prefix}_PPGe_T"]
+            )
 
             def safe_slope(v1, v2, t1, t2):
                 return (v2 - v1) / (t2 - t1) if (t2 - t1) != 0 else np.nan
@@ -495,7 +525,8 @@ def build_feature_table(pws_df, indices_df, site_prefix: str):
 
     return pd.DataFrame(rows)
 
-def map_age(df_features, indices_df):
+
+def map_age(df_features: pd.DataFrame, indices_df: pd.DataFrame) -> pd.DataFrame:
     id_map = indices_df.rename(columns={c: c.strip() for c in indices_df.columns})
     if "Subject Number" not in id_map.columns:
         id_map = id_map.copy()
@@ -504,31 +535,9 @@ def map_age(df_features, indices_df):
     df_features["Age"] = df_features["Subject Number"].map(age_map)
     return df_features
 
-# ============================== LOAD DATA ==============================
-dfdig = pd.read_csv(DIG_PWS_CSV)
-dfrad = pd.read_csv(RAD_PWS_CSV)
-dfbra = pd.read_csv(BRACH_PWS_CSV)
-
-idx_dig = pd.read_csv(DIG_IDX_CSV)
-idx_rad = pd.read_csv(RAD_IDX_CSV)
-idx_bra = pd.read_csv(BRACH_IDX_CSV)
-
-# =========================== BUILD FEATURES ===========================
-combined_results_dig   = build_feature_table(dfdig, idx_dig, "Digital")
-combined_results_rad   = build_feature_table(dfrad, idx_rad, "Radial")
-combined_results_brach = build_feature_table(dfbra, idx_bra, "Brachial")
-
-combined_results_dig   = map_age(combined_results_dig, idx_dig)
-combined_results_rad   = map_age(combined_results_rad, idx_rad)
-combined_results_brach = map_age(combined_results_brach, idx_bra)
-
-# Optional save
-combined_results_dig.to_csv(TAB_OUT_DIR / "combined_result_dig.csv", index=False)
-combined_results_rad.to_csv(TAB_OUT_DIR / "combined_result_rad.csv", index=False)
-combined_results_brach.to_csv(TAB_OUT_DIR / "combined_result_brach.csv", index=False)
 
 # ============================== AGE ANALYSIS ==============================
-def correlate_features(df, alpha=ALPHA_P, extra_drop=("Subject Number",)):
+def correlate_features(df: pd.DataFrame, alpha: float = ALPHA_P, extra_drop=("Subject Number",)):
     """
     Returns (sig_df, nonsig_df), both sorted by |correlation| desc.
     """
@@ -549,30 +558,14 @@ def correlate_features(df, alpha=ALPHA_P, extra_drop=("Subject Number",)):
     nonsig = out.loc[out["P-Value"] >= alpha].reset_index(drop=True)
     return sig, nonsig
 
-sig_dig,   nonsig_dig   = correlate_features(combined_results_dig)
-sig_rad,   nonsig_rad   = correlate_features(combined_results_rad)
-sig_brach, nonsig_brach = correlate_features(combined_results_brach)
-
-# Save significance tables (for transparency & supplements)
-sig_dig.to_csv(TAB_OUT_DIR / "corr_digital_significant.csv", index=False)
-sig_rad.to_csv(TAB_OUT_DIR / "corr_radial_significant.csv", index=False)
-sig_brach.to_csv(TAB_OUT_DIR / "corr_brachial_significant.csv", index=False)
-
-nonsig_dig.to_csv(TAB_OUT_DIR / "corr_digital_nonsignificant_removed.csv", index=False)
-nonsig_rad.to_csv(TAB_OUT_DIR / "corr_radial_nonsignificant_removed.csv", index=False)
-nonsig_brach.to_csv(TAB_OUT_DIR / "corr_brachial_nonsignificant_removed.csv", index=False)
-
-# --------- Enhanced report: print p-values & correlations; save TXT ---------
-def report_removed(nonsig_df, artery_label, outdir=TAB_OUT_DIR, alpha=ALPHA_P):
+def report_removed(nonsig_df: pd.DataFrame, artery_label: str, outdir: Path = TAB_OUT_DIR, alpha: float = ALPHA_P):
     n = len(nonsig_df)
     print(f"[{artery_label}] Non-significant features removed from bar plot (p >= {alpha}): {n}")
     if n == 0:
         return
-    # Console print, sorted by p ascending
     for _, row in nonsig_df.sort_values("P-Value").iterrows():
         feat = row["Feature"]; pval = row["P-Value"]; r = row["Correlation"]
         print(f"  {feat}: p={pval:.3g}, r={r:+.2f}")
-    # Write a tidy TXT
     fname = f"corr_{artery_label.lower().replace(' ', '_')}_nonsignificant_with_p.txt"
     with open(outdir / fname, "w", encoding="utf-8") as f:
         f.write(f"{artery_label} — Non-significant features (p >= {alpha})\n")
@@ -580,17 +573,9 @@ def report_removed(nonsig_df, artery_label, outdir=TAB_OUT_DIR, alpha=ALPHA_P):
         for _, row in nonsig_df.sort_values("P-Value").iterrows():
             f.write(f"{row['Feature']}\t{row['P-Value']:.6f}\t{row['Correlation']:+.6f}\n")
 
-report_removed(nonsig_dig, "Digital")
-report_removed(nonsig_rad, "Radial")
-report_removed(nonsig_brach, "Brachial")
 
 # ============================== PLOTTING ==============================
-def plot_age_trajectories(comb_dig, comb_rad, comb_bra, outdir=FIG_OUT_DIR):
-    """
-    Features vs. Age line plots across Digital/Radial/Brachial with
-    Times New Roman mathtext (upright) and large, consistent font sizes.
-    Math-like feature titles (e.g., $t_{a-b}$) get a small size bump.
-    """
+def plot_age_trajectories(comb_dig, comb_rad, comb_bra, outdir: Path = FIG_OUT_DIR):
     features = [c for c in comb_dig.columns if c not in ("Subject Number", "Age")]
     ages = sorted(comb_dig["Age"].dropna().unique())
 
@@ -600,9 +585,9 @@ def plot_age_trajectories(comb_dig, comb_rad, comb_bra, outdir=FIG_OUT_DIR):
     axes = axes.flatten()
 
     styles = [
-        dict(marker="o", linestyle="-",  linewidth=LINE_LW, markersize=MARKER_SZ, label="Digital"),
+        dict(marker="o", linestyle="-", linewidth=LINE_LW, markersize=MARKER_SZ, label="Digital"),
         dict(marker="s", linestyle="--", linewidth=LINE_LW, markersize=MARKER_SZ, label="Radial"),
-        dict(marker="^", linestyle=":",  linewidth=LINE_LW, markersize=MARKER_SZ, label="Brachial"),
+        dict(marker="^", linestyle=":", linewidth=LINE_LW, markersize=MARKER_SZ, label="Brachial"),
     ]
 
     for i, f in enumerate(features):
@@ -615,7 +600,6 @@ def plot_age_trajectories(comb_dig, comb_rad, comb_bra, outdir=FIG_OUT_DIR):
         ax.plot(rad.index, rad.values, **styles[1])
         ax.plot(bra.index, bra.values, **styles[2])
 
-        # math labels get a small size boost
         title_txt = label_for(f)
         is_math = isinstance(title_txt, str) and title_txt.startswith("$") and title_txt.endswith("$")
         fs = TITLE_FS + (5 if is_math else 0)
@@ -629,38 +613,27 @@ def plot_age_trajectories(comb_dig, comb_rad, comb_bra, outdir=FIG_OUT_DIR):
         ax.tick_params(axis="y", labelsize=TICK_FS)
 
         ax.yaxis.set_major_formatter(ScalarFormatter(useMathText=False))
-        ax.ticklabel_format(style='plain', axis='y', useOffset=False)
+        ax.ticklabel_format(style="plain", axis="y", useOffset=False)
 
-    # Hide extra axes if any
     for j in range(len(features), len(axes)):
         fig.delaxes(axes[j])
 
-    # Spacing (more breathing room)
     fig.subplots_adjust(top=1.0, bottom=0.11, left=0.05, right=0.995, hspace=1.6, wspace=0.8)
 
-    # Single figure legend (large & clear)
     handles, labels = axes[0].get_legend_handles_labels()
-    fig.legend(
-        handles, labels,
-        loc='lower center',
-        bbox_to_anchor=(0.5, 0.038),
-        ncol=3,
-        fontsize=LEGEND_FS,
-        frameon=False
-    )
+    fig.legend(handles, labels, loc="lower center", bbox_to_anchor=(0.5, 0.038),
+               ncol=3, fontsize=LEGEND_FS, frameon=False)
 
     fig.savefig(outdir / "Figure_features_vs_age.png", dpi=600, bbox_inches="tight", pad_inches=0.2)
     fig.savefig(outdir / "Figure_features_vs_age.pdf", bbox_inches="tight")
     plt.show()
+    plt.close(fig)
 
-def plot_corr_bars(df_sorted, label, artery_name, outdir=FIG_OUT_DIR, save_basename=None):
-    """
-    Plots ONLY significant features (p < ALPHA_P), as per paper figure.
-    Non-significant ones are reported & saved separately (see above).
-    """
+def plot_corr_bars(df_sorted, label, artery_name, outdir: Path = FIG_OUT_DIR, save_basename: str | None = None):
     if df_sorted.empty:
         print(f"({label}) {artery_name}: no significant features (p<{ALPHA_P}).")
         return
+
     r_signed = df_sorted["Correlation"].to_numpy()
     r_abs = np.abs(r_signed)
     feats = df_sorted["Feature"].to_numpy()
@@ -691,251 +664,298 @@ def plot_corr_bars(df_sorted, label, artery_name, outdir=FIG_OUT_DIR, save_basen
         fig.savefig(outdir / f"{save_basename}.png", dpi=600, bbox_inches="tight", pad_inches=0.1)
         fig.savefig(outdir / f"{save_basename}.pdf", dpi=600, bbox_inches="tight")
     plt.show()
+    plt.close(fig)
 
-# -------------------------- PLOTS --------------------------
-plot_age_trajectories(combined_results_dig, combined_results_rad, combined_results_brach)
-plot_corr_bars(sig_dig,   "a", "Digital Artery",  save_basename="corr_digital")
-plot_corr_bars(sig_rad,   "b", "Radial Artery",   save_basename="corr_radial")
-plot_corr_bars(sig_brach, "c", "Brachial Artery", save_basename="corr_brachial")
 
 # ============================== MODELING (Radial) ==============================
-# Load cf-PWV, align with radial features
-pwv_df = pd.read_csv(PWV_CSV)
-pwv_df.columns = [c.strip() for c in pwv_df.columns]
+def train_cf_pwv_model(combined_results_rad: pd.DataFrame, pwv_csv: Path = PWV_CSV):
+    pwv_df = pd.read_csv(pwv_csv)
+    pwv_df.columns = [c.strip() for c in pwv_df.columns]
 
-features_df = combined_results_rad.copy()
-merged_df = pd.merge(features_df, pwv_df[["Subject Number", "PWV_cf [m/s]"]],
-                     on="Subject Number", how="inner")
-merged_df = merged_df.rename(columns={"PWV_cf [m/s]": "cf_pwv"})
+    merged_df = pd.merge(
+        combined_results_rad.copy(),
+        pwv_df[["Subject Number", "PWV_cf [m/s]"]],
+        on="Subject Number",
+        how="inner",
+    ).rename(columns={"PWV_cf [m/s]": "cf_pwv"})
 
-# ---- Prevent leakage & ensure numeric types ----
-X = (merged_df
-     .drop(columns=["Subject Number", "Age", "cf_pwv"], errors="ignore")
-     .apply(pd.to_numeric, errors="coerce"))
-y = pd.to_numeric(merged_df["cf_pwv"], errors="coerce")
+    X = (merged_df
+         .drop(columns=["Subject Number", "Age", "cf_pwv"], errors="ignore")
+         .apply(pd.to_numeric, errors="coerce"))
+    y = pd.to_numeric(merged_df["cf_pwv"], errors="coerce")
 
-# Drop rows with NaN target (sync X)
-mask = y.notna() & np.isfinite(y)
-X = X.loc[mask].reset_index(drop=True)
-y = y.loc[mask].reset_index(drop=True)
+    mask = y.notna() & np.isfinite(y)
+    X = X.loc[mask].reset_index(drop=True)
+    y = y.loc[mask].reset_index(drop=True)
 
-def make_strat_bins(y_series, n_splits=5, max_bins=10, min_bins=3):
-    """Quantile bins for stratified CV (ensures ≥ n_splits samples per bin)."""
-    y_series = pd.Series(y_series).reset_index(drop=True)
-    for q in range(max_bins, min_bins - 1, -1):
-        try:
-            bins = pd.qcut(y_series, q=q, labels=False, duplicates="drop")
-            vc = pd.Series(bins).value_counts()
-            if (vc >= n_splits).all() and vc.index.nunique() >= 2:
-                return bins
-        except Exception:
-            continue
-    return None
+    def make_strat_bins(y_series, n_splits=5, max_bins=10, min_bins=3):
+        y_series = pd.Series(y_series).reset_index(drop=True)
+        for q in range(max_bins, min_bins - 1, -1):
+            try:
+                bins = pd.qcut(y_series, q=q, labels=False, duplicates="drop")
+                vc = pd.Series(bins).value_counts()
+                if (vc >= n_splits).all() and vc.index.nunique() >= 2:
+                    return bins
+            except Exception:
+                continue
+        return None
 
-# CV setup
-n_splits = 5
-y_bins = make_strat_bins(y, n_splits=n_splits)
-if y_bins is not None:
-    cv = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=RANDOM_STATE)
-    split_iter = cv.split(X, y_bins)
-else:
-    cv = KFold(n_splits=n_splits, shuffle=True, random_state=RANDOM_STATE)
-    split_iter = cv.split(X)
+    n_splits = 5
+    y_bins = make_strat_bins(y, n_splits=n_splits)
+    if y_bins is not None:
+        cv = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=RANDOM_STATE)
+        split_iter = cv.split(X, y_bins)
+    else:
+        cv = KFold(n_splits=n_splits, shuffle=True, random_state=RANDOM_STATE)
+        split_iter = cv.split(X)
 
-# Train / predict with strict reproducibility
-mae_list, rmse_list, r2_list = [], [], []
-fold_y_test, fold_y_pred, fold_residuals = [], [], []
-perm_importances = []
-per_fold_rows = []
+    mae_list, rmse_list, r2_list = [], [], []
+    fold_y_test, fold_y_pred, fold_residuals = [], [], []
+    perm_importances = []
+    per_fold_rows = []
 
-for i, (tr, te) in enumerate(split_iter, start=1):
-    X_train, X_test = X.iloc[tr], X.iloc[te]
-    y_train, y_test = y.iloc[tr], y.iloc[te]
+    for i, (tr, te) in enumerate(split_iter, start=1):
+        X_train, X_test = X.iloc[tr], X.iloc[te]
+        y_train, y_test = y.iloc[tr], y.iloc[te]
 
-    model = XGBRegressor(
-        n_estimators=400, learning_rate=0.05, max_depth=5,
-        objective="reg:squarederror", random_state=RANDOM_STATE, n_jobs=1
-    )
-    model.fit(X_train, y_train)
-    y_pred = model.predict(X_test)
+        model = XGBRegressor(
+            n_estimators=400, learning_rate=0.05, max_depth=5,
+            objective="reg:squarederror", random_state=RANDOM_STATE, n_jobs=1
+        )
+        model.fit(X_train, y_train)
+        y_pred = model.predict(X_test)
 
-    mae = mean_absolute_error(y_test, y_pred)
-    rmse = mean_squared_error(y_test, y_pred, squared=False)
-    r2 = r2_score(y_test, y_pred)
+        mae = mean_absolute_error(y_test, y_pred)
+        rmse = mean_squared_error(y_test, y_pred, squared=False)
+        r2 = r2_score(y_test, y_pred)
 
-    mae_list.append(mae); rmse_list.append(rmse); r2_list.append(r2)
-    per_fold_rows.append({"Fold": i, "MAE": mae, "RMSE": rmse, "R2": r2})
+        mae_list.append(mae); rmse_list.append(rmse); r2_list.append(r2)
+        per_fold_rows.append({"Fold": i, "MAE": mae, "RMSE": rmse, "R2": r2})
 
-    fold_y_test.append(y_test.values)
-    fold_y_pred.append(y_pred)
-    fold_residuals.append(y_test.values - y_pred)
+        fold_y_test.append(y_test.values)
+        fold_y_pred.append(y_pred)
+        fold_residuals.append(y_test.values - y_pred)
 
-    pi = permutation_importance(model, X_test, y_test,
-                                n_repeats=10, random_state=RANDOM_STATE, n_jobs=-1)
-    perm_importances.append(pi.importances_mean)
+        pi = permutation_importance(
+            model, X_test, y_test,
+            n_repeats=10, random_state=RANDOM_STATE, n_jobs=-1
+        )
+        perm_importances.append(pi.importances_mean)
 
-# ---- Per-fold metrics table (print 3 decimals) ----
-per_fold_df = pd.DataFrame(per_fold_rows)
-per_fold_print = per_fold_df.copy()
-for col in ["MAE", "RMSE", "R2"]:
-    per_fold_print[col] = per_fold_print[col].map(lambda v: f"{v:.3f}")
+    per_fold_df = pd.DataFrame(per_fold_rows)
+    per_fold_print = per_fold_df.copy()
+    for col in ["MAE", "RMSE", "R2"]:
+        per_fold_print[col] = per_fold_print[col].map(lambda v: f"{v:.3f}")
 
-summary = {
-    "Fold": "Mean ± SD",
-    "MAE":  f"{np.mean(mae_list):.3f} ± {np.std(mae_list):.3f}",
-    "RMSE": f"{np.mean(rmse_list):.3f} ± {np.std(rmse_list):.3f}",
-    "R2":   f"{np.mean(r2_list):.3f} ± {np.std(r2_list):.3f}",
-}
-print("\nPer-fold evaluation (Radial → cf-PWV):")
-print(per_fold_print.to_string(index=False))
-print("\nSummary:")
-print(summary)
+    summary = {
+        "Fold": "Mean ± SD",
+        "MAE": f"{np.mean(mae_list):.3f} ± {np.std(mae_list):.3f}",
+        "RMSE": f"{np.mean(rmse_list):.3f} ± {np.std(rmse_list):.3f}",
+        "R2": f"{np.mean(r2_list):.3f} ± {np.std(r2_list):.3f}",
+    }
 
-# Save metrics
-per_fold_df.to_csv(TAB_OUT_DIR / "model_radial_per_fold_metrics.csv", index=False, float_format="%.3f")
-with open(TAB_OUT_DIR / "model_radial_summary.txt", "w", encoding="utf-8") as f:
-    f.write("Per-fold evaluation (Radial → cf-PWV)\n")
-    f.write(per_fold_df.to_csv(index=False, float_format="%.3f"))
-    f.write("\nSummary:\n")
-    for k, v in summary.items():
-        f.write(f"{k}: {v}\n")
+    print("\nPer-fold evaluation (Radial → cf-PWV):")
+    print(per_fold_print.to_string(index=False))
+    print("\nSummary:")
+    print(summary)
 
-# ============================== DIAGNOSTICS PLOTS ==============================
-# Shared limits
-all_actual = np.concatenate(fold_y_test)
-all_pred   = np.concatenate(fold_y_pred)
-pad = 0.5
-xlims_common = (all_actual.min() - pad, all_actual.max() + pad)
-lim_both = (min(xlims_common[0], all_pred.min() - pad),
-            max(xlims_common[1], all_pred.max() + pad))
+    # Save metrics
+    per_fold_df.to_csv(TAB_OUT_DIR / "model_radial_per_fold_metrics.csv", index=False, float_format="%.3f")
+    with open(TAB_OUT_DIR / "model_radial_summary.txt", "w", encoding="utf-8") as f:
+        f.write("Per-fold evaluation (Radial → cf-PWV)\n")
+        f.write(per_fold_df.to_csv(index=False, float_format="%.3f"))
+        f.write("\nSummary:\n")
+        for k, v in summary.items():
+            f.write(f"{k}: {v}\n")
 
-# Style constants
-FOLD_COLORS = ["#56B4E9", "#009E73", "#CC79A7", "#A65628", "#0072B2"]
-FOLD_MARKERS = ["o"] * 5
-IDEAL_LINE_COLOR = "#E69F00"
-EDGE_COLOR = "k"; EDGE_LW = 0.9
-POINT_SIZE_PRED = 44; ALPHA_PRED = 0.70
-POINT_SIZE_RES = 38;  ALPHA_RES = 0.65
+    # Diagnostics plots
+    all_actual = np.concatenate(fold_y_test)
+    all_pred = np.concatenate(fold_y_pred)
+    pad = 0.5
+    xlims_common = (all_actual.min() - pad, all_actual.max() + pad)
+    lim_both = (min(xlims_common[0], all_pred.min() - pad),
+                max(xlims_common[1], all_pred.max() + pad))
 
-# A. Predicted vs Actual
-fig, ax = plt.subplots(figsize=(5.8, 5.8), dpi=600)
-ax.plot(lim_both, lim_both, ls="--", c=IDEAL_LINE_COLOR, lw=1.8, label="Ideal prediction")
-for i, (yt, yp) in enumerate(zip(fold_y_test, fold_y_pred)):
-    ax.scatter(yt, yp, s=POINT_SIZE_PRED, c=FOLD_COLORS[i], marker=FOLD_MARKERS[i],
-               alpha=ALPHA_PRED, edgecolors=EDGE_COLOR, linewidths=EDGE_LW, label=f"Fold {i+1}")
-ax.set_xlim(lim_both); ax.set_ylim(lim_both)
-ax.set_xlabel("Actual cf-PWV [m/s]"); ax.set_ylabel("Predicted cf-PWV [m/s]")
-ax.set_aspect("equal", adjustable="box")
-ax.xaxis.set_major_locator(MaxNLocator(6)); ax.yaxis.set_major_locator(MaxNLocator(6))
-ax.legend(loc="lower center", bbox_to_anchor=(0.5, 1.03), ncol=3, frameon=True, fontsize=13)
-fig.savefig(FIG_OUT_DIR / "predicted_vs_actual_cfPWV.png", dpi=600, bbox_inches="tight", pad_inches=0.1)
-fig.savefig(FIG_OUT_DIR / "predicted_vs_actual_cfPWV.pdf", dpi=600, bbox_inches="tight")
-plt.show()
+    FOLD_COLORS = ["#56B4E9", "#009E73", "#CC79A7", "#A65628", "#0072B2"]
+    FOLD_MARKERS = ["o"] * 5
+    IDEAL_LINE_COLOR = "#E69F00"
+    EDGE_COLOR = "k"; EDGE_LW = 0.9
+    POINT_SIZE_PRED = 44; ALPHA_PRED = 0.70
+    POINT_SIZE_RES = 38; ALPHA_RES = 0.65
 
-# B. Residuals vs Actual  (Residual = Actual − Predicted)
-fig, ax = plt.subplots(figsize=(6.2, 4.8), dpi=600)
-ax.axhline(0.0, c=IDEAL_LINE_COLOR, ls="--", lw=1.8, label="Zero residual")
-for i, (yt, yp) in enumerate(zip(fold_y_test, fold_y_pred)):
-    res = yt - yp
-    ax.scatter(yt, res, s=POINT_SIZE_RES, c=FOLD_COLORS[i], marker=FOLD_MARKERS[i],
-               alpha=ALPHA_RES, edgecolors=EDGE_COLOR, linewidths=EDGE_LW, label=f"Fold {i+1}")
-all_res = np.concatenate(fold_residuals)
-rng = np.max(np.abs(all_res)) * 1.1
-ax.set_ylim(-rng, rng); ax.set_xlim(xlims_common)
-ax.set_xlabel("Actual cf-PWV [m/s]"); ax.set_ylabel("Residual (Actual − Predicted) [m/s]")
-ax.xaxis.set_major_locator(MaxNLocator(6)); ax.yaxis.set_major_locator(MaxNLocator(6))
-ax.legend(loc="lower center", bbox_to_anchor=(0.5, 1.03), ncol=3, frameon=True, fontsize=13)
-fig.savefig(FIG_OUT_DIR / "residuals_vs_actual_cfPWV.png", dpi=600, bbox_inches="tight", pad_inches=0.1)
-fig.savefig(FIG_OUT_DIR / "residuals_vs_actual_cfPWV.pdf", dpi=600, bbox_inches="tight")
-plt.show()
+    # A. Predicted vs Actual
+    fig, ax = plt.subplots(figsize=(5.8, 5.8), dpi=600)
+    ax.plot(lim_both, lim_both, ls="--", c=IDEAL_LINE_COLOR, lw=1.8, label="Ideal prediction")
+    for i, (yt, yp) in enumerate(zip(fold_y_test, fold_y_pred)):
+        ax.scatter(yt, yp, s=POINT_SIZE_PRED, c=FOLD_COLORS[i], marker=FOLD_MARKERS[i],
+                   alpha=ALPHA_PRED, edgecolors=EDGE_COLOR, linewidths=EDGE_LW, label=f"Fold {i+1}")
+    ax.set_xlim(lim_both); ax.set_ylim(lim_both)
+    ax.set_xlabel("Actual cf-PWV [m/s]"); ax.set_ylabel("Predicted cf-PWV [m/s]")
+    ax.set_aspect("equal", adjustable="box")
+    ax.xaxis.set_major_locator(MaxNLocator(6)); ax.yaxis.set_major_locator(MaxNLocator(6))
+    ax.legend(loc="lower center", bbox_to_anchor=(0.5, 1.03), ncol=3, frameon=True, fontsize=13)
+    fig.savefig(FIG_OUT_DIR / "predicted_vs_actual_cfPWV.png", dpi=600, bbox_inches="tight", pad_inches=0.1)
+    fig.savefig(FIG_OUT_DIR / "predicted_vs_actual_cfPWV.pdf", dpi=600, bbox_inches="tight")
+    plt.show()
+    plt.close(fig)
 
-# C. Bland–Altman (Difference = Predicted − Reference)
-y_true_all = np.concatenate(fold_y_test)
-y_pred_all = np.concatenate(fold_y_pred)
-mean_vals = (y_pred_all + y_true_all) / 2.0
-diff_vals = (y_pred_all - y_true_all)
+    # B. Residuals vs Actual  (Residual = Actual − Predicted)
+    fig, ax = plt.subplots(figsize=(6.2, 4.8), dpi=600)
+    ax.axhline(0.0, c=IDEAL_LINE_COLOR, ls="--", lw=1.8, label="Zero residual")
+    for i, (yt, yp) in enumerate(zip(fold_y_test, fold_y_pred)):
+        res = yt - yp
+        ax.scatter(yt, res, s=POINT_SIZE_RES, c=FOLD_COLORS[i], marker=FOLD_MARKERS[i],
+                   alpha=ALPHA_RES, edgecolors=EDGE_COLOR, linewidths=EDGE_LW, label=f"Fold {i+1}")
+    all_res = np.concatenate(fold_residuals)
+    rng = np.max(np.abs(all_res)) * 1.1
+    ax.set_ylim(-rng, rng); ax.set_xlim(xlims_common)
+    ax.set_xlabel("Actual cf-PWV [m/s]"); ax.set_ylabel("Residual (Actual − Predicted) [m/s]")
+    ax.xaxis.set_major_locator(MaxNLocator(6)); ax.yaxis.set_major_locator(MaxNLocator(6))
+    ax.legend(loc="lower center", bbox_to_anchor=(0.5, 1.03), ncol=3, frameon=True, fontsize=13)
+    fig.savefig(FIG_OUT_DIR / "residuals_vs_actual_cfPWV.png", dpi=600, bbox_inches="tight", pad_inches=0.1)
+    fig.savefig(FIG_OUT_DIR / "residuals_vs_actual_cfPWV.pdf", dpi=600, bbox_inches="tight")
+    plt.show()
+    plt.close(fig)
 
-bias = diff_vals.mean()
-sd   = diff_vals.std(ddof=1)
-loa_upper = bias + 1.96*sd
-loa_lower = bias - 1.96*sd
+    # C. Bland–Altman (Difference = Predicted − Reference)
+    y_true_all = np.concatenate(fold_y_test)
+    y_pred_all = np.concatenate(fold_y_pred)
+    mean_vals = (y_pred_all + y_true_all) / 2.0
+    diff_vals = (y_pred_all - y_true_all)
 
-# ----- Bland–Altman numeric summary (print + save) -----
-print("\nBland–Altman (Predicted − Reference) summary:")
-print(f"  n               : {diff_vals.size:d}")
-print(f"  Bias (mean diff): {bias:+.3f} m/s")
-print(f"  SD of diff      : {sd:.3f} m/s")
-print(f"  95% LoA         : [{loa_lower:+.3f}, {loa_upper:+.3f}] m/s")
-# Optional proportional-bias check
-try:
-    r_pb, p_pb = pearsonr(mean_vals, diff_vals)
-    print(f"  Proportional bias: r = {r_pb:+.3f}, p = {p_pb:.3g}")
-except Exception:
-    pass
+    bias = diff_vals.mean()
+    sd = diff_vals.std(ddof=1)
+    loa_upper = bias + 1.96 * sd
+    loa_lower = bias - 1.96 * sd
 
-# Save BA summary
-ba_df = pd.DataFrame({
-    "n": [diff_vals.size],
-    "Bias_mean_diff_m_per_s": [bias],
-    "SD_diff_m_per_s": [sd],
-    "LoA_lower_m_per_s": [loa_lower],
-    "LoA_upper_m_per_s": [loa_upper],
-})
-ba_df.to_csv(TAB_OUT_DIR / "bland_altman_summary.csv", index=False, float_format="%.3f")
-with open(TAB_OUT_DIR / "bland_altman_summary.txt", "w", encoding="utf-8") as f:
-    f.write("Bland–Altman (Predicted − Reference) summary\n")
-    f.write(f"n: {diff_vals.size}\n")
-    f.write(f"Bias (mean diff): {bias:+.3f} m/s\n")
-    f.write(f"SD of diff: {sd:.3f} m/s\n")
-    f.write(f"95% LoA: [{loa_lower:+.3f}, {loa_upper:+.3f}] m/s\n")
+    print("\nBland–Altman (Predicted − Reference) summary:")
+    print(f"  n               : {diff_vals.size:d}")
+    print(f"  Bias (mean diff): {bias:+.3f} m/s")
+    print(f"  SD of diff      : {sd:.3f} m/s")
+    print(f"  95% LoA         : [{loa_lower:+.3f}, {loa_upper:+.3f}] m/s")
     try:
-        f.write(f"Proportional bias: r = {r_pb:+.3f}, p = {p_pb:.3g}\n")
+        r_pb, p_pb = pearsonr(mean_vals, diff_vals)
+        print(f"  Proportional bias: r = {r_pb:+.3f}, p = {p_pb:.3g}")
     except Exception:
         pass
 
-# Plot BA
-fig, ax = plt.subplots(figsize=(6.2, 4.8), dpi=600)
-for i, (yt, yp) in enumerate(zip(fold_y_test, fold_y_pred)):
-    m = (yp + yt) / 2.0; d = (yp - yt)
-    ax.scatter(m, d, s=POINT_SIZE_RES, c=FOLD_COLORS[i], marker=FOLD_MARKERS[i],
-               alpha=ALPHA_RES, edgecolors=EDGE_COLOR, linewidths=EDGE_LW, label=f"Fold {i+1}")
-xpad = 0.5
-xlims = (mean_vals.min() - xpad, mean_vals.max() + xpad)
-ax.set_xlim(xlims)
-ax.fill_between([xlims[0], xlims[1]], loa_lower, loa_upper, color="0.7", alpha=0.12, zorder=0)
-ax.axhline(bias,      color=IDEAL_LINE_COLOR, lw=1.8, label=f"Bias = {bias:+.3f} m/s")
-ax.axhline(loa_upper, color=IDEAL_LINE_COLOR, lw=1.8, ls="--")
-ax.axhline(loa_lower, color=IDEAL_LINE_COLOR, lw=1.8, ls="--")
-ax.set_xlabel("Mean of predicted and reference cf-PWV [m/s]")
-ax.set_ylabel("Difference (Predicted − Reference) [m/s]")
-ax.yaxis.set_major_locator(MaxNLocator(6)); ax.xaxis.set_major_locator(MaxNLocator(6))
-handles, labels = ax.get_legend_handles_labels()
-handles.append(Line2D([0], [0], color=IDEAL_LINE_COLOR, lw=1.8, ls="--"))
-labels.append("95% LoA")
-ax.legend(handles, labels, loc="lower center", bbox_to_anchor=(0.5, 1.03),
-          ncol=3, frameon=True, fontsize=13)
-fig.savefig(FIG_OUT_DIR / "bland_altman_cfPWV.png", dpi=600, bbox_inches="tight", pad_inches=0.1)
-fig.savefig(FIG_OUT_DIR / "bland_altman_cfPWV.pdf", dpi=600, bbox_inches="tight")
-plt.show()
+    ba_df = pd.DataFrame({
+        "n": [diff_vals.size],
+        "Bias_mean_diff_m_per_s": [bias],
+        "SD_diff_m_per_s": [sd],
+        "LoA_lower_m_per_s": [loa_lower],
+        "LoA_upper_m_per_s": [loa_upper],
+    })
+    ba_df.to_csv(TAB_OUT_DIR / "bland_altman_summary.csv", index=False, float_format="%.3f")
+    with open(TAB_OUT_DIR / "bland_altman_summary.txt", "w", encoding="utf-8") as f:
+        f.write("Bland–Altman (Predicted − Reference) summary\n")
+        f.write(f"n: {diff_vals.size}\n")
+        f.write(f"Bias (mean diff): {bias:+.3f} m/s\n")
+        f.write(f"SD of diff: {sd:.3f} m/s\n")
+        f.write(f"95% LoA: [{loa_lower:+.3f}, {loa_upper:+.3f}] m/s\n")
 
-# D. Permutation importance (Top-10) — using display names on y-axis
-perm_importances = np.array(perm_importances)
-perm_mean = perm_importances.mean(axis=0)
-fi_df = (pd.DataFrame({"Feature": X.columns, "Importance": perm_mean})
-         .sort_values("Importance", ascending=False).reset_index(drop=True))
+    fig, ax = plt.subplots(figsize=(6.2, 4.8), dpi=600)
+    for i, (yt, yp) in enumerate(zip(fold_y_test, fold_y_pred)):
+        m = (yp + yt) / 2.0
+        d = (yp - yt)
+        ax.scatter(m, d, s=POINT_SIZE_RES, c=FOLD_COLORS[i], marker=FOLD_MARKERS[i],
+                   alpha=ALPHA_RES, edgecolors=EDGE_COLOR, linewidths=EDGE_LW, label=f"Fold {i+1}")
+    xpad = 0.5
+    xlims = (mean_vals.min() - xpad, mean_vals.max() + xpad)
+    ax.set_xlim(xlims)
+    ax.fill_between([xlims[0], xlims[1]], loa_lower, loa_upper, color="0.7", alpha=0.12, zorder=0)
+    ax.axhline(bias, color=IDEAL_LINE_COLOR, lw=1.8, label=f"Bias = {bias:+.3f} m/s")
+    ax.axhline(loa_upper, color=IDEAL_LINE_COLOR, lw=1.8, ls="--")
+    ax.axhline(loa_lower, color=IDEAL_LINE_COLOR, lw=1.8, ls="--")
+    ax.set_xlabel("Mean of predicted and reference cf-PWV [m/s]")
+    ax.set_ylabel("Difference (Predicted − Reference) [m/s]")
+    ax.yaxis.set_major_locator(MaxNLocator(6)); ax.xaxis.set_major_locator(MaxNLocator(6))
+    handles, labels = ax.get_legend_handles_labels()
+    handles.append(Line2D([0], [0], color=IDEAL_LINE_COLOR, lw=1.8, ls="--"))
+    labels.append("95% LoA")
+    ax.legend(handles, labels, loc="lower center", bbox_to_anchor=(0.5, 1.03),
+              ncol=3, frameon=True, fontsize=13)
+    fig.savefig(FIG_OUT_DIR / "bland_altman_cfPWV.png", dpi=600, bbox_inches="tight", pad_inches=0.1)
+    fig.savefig(FIG_OUT_DIR / "bland_altman_cfPWV.pdf", dpi=600, bbox_inches="tight")
+    plt.show()
+    plt.close(fig)
 
-topk = 10
-fi_top = fi_df.head(topk).iloc[::-1]  # reverse for barh
-fi_labels_disp = [label_for(k) for k in fi_top["Feature"]]
+    # D. Permutation importance (Top-10)
+    perm_importances = np.array(perm_importances)
+    perm_mean = perm_importances.mean(axis=0)
+    fi_df = (pd.DataFrame({"Feature": X.columns, "Importance": perm_mean})
+             .sort_values("Importance", ascending=False).reset_index(drop=True))
 
-fig, ax = plt.subplots(figsize=(8.6, 3.5), dpi=600)
-ax.barh(fi_labels_disp, fi_top["Importance"], color="#4C78A8", edgecolor="none", height=0.68)
-ax.set_xlabel("Permutation importance", fontsize=13, labelpad=6)
-ax.set_ylabel("Feature", fontsize=12, labelpad=8)
-ax.tick_params(axis="y", labelsize=11); ax.tick_params(axis="x", labelsize=11)
-ax.xaxis.set_major_locator(MaxNLocator(6))
-ax.set_xlim(0, float(fi_top["Importance"].max()) * 1.06)
-fig.subplots_adjust(left=0.27, right=0.98, bottom=0.22, top=0.96)
-fig.savefig(FIG_OUT_DIR / "feature_importance_cfPWV.png", dpi=600, bbox_inches="tight", pad_inches=0.1)
-fig.savefig(FIG_OUT_DIR / "feature_importance_cfPWV.pdf", dpi=600, bbox_inches="tight")
-plt.show()
+    topk = 10
+    fi_top = fi_df.head(topk).iloc[::-1]
+    fi_labels_disp = [label_for(k) for k in fi_top["Feature"]]
+
+    fig, ax = plt.subplots(figsize=(8.6, 3.5), dpi=600)
+    ax.barh(fi_labels_disp, fi_top["Importance"], color="#4C78A8", edgecolor="none", height=0.68)
+    ax.set_xlabel("Permutation importance", fontsize=13, labelpad=6)
+    ax.set_ylabel("Feature", fontsize=12, labelpad=8)
+    ax.tick_params(axis="y", labelsize=11); ax.tick_params(axis="x", labelsize=11)
+    ax.xaxis.set_major_locator(MaxNLocator(6))
+    ax.set_xlim(0, float(fi_top["Importance"].max()) * 1.06)
+    fig.subplots_adjust(left=0.27, right=0.98, bottom=0.22, top=0.96)
+    fig.savefig(FIG_OUT_DIR / "feature_importance_cfPWV.png", dpi=600, bbox_inches="tight", pad_inches=0.1)
+    fig.savefig(FIG_OUT_DIR / "feature_importance_cfPWV.pdf", dpi=600, bbox_inches="tight")
+    plt.show()
+    plt.close(fig)
+
+
+def main():
+    _require_files([DIG_PWS_CSV, RAD_PWS_CSV, BRACH_PWS_CSV, DIG_IDX_CSV, RAD_IDX_CSV, BRACH_IDX_CSV, PWV_CSV])
+
+    # Load data
+    dfdig = pd.read_csv(DIG_PWS_CSV)
+    dfrad = pd.read_csv(RAD_PWS_CSV)
+    dfbra = pd.read_csv(BRACH_PWS_CSV)
+
+    idx_dig = pd.read_csv(DIG_IDX_CSV)
+    idx_rad = pd.read_csv(RAD_IDX_CSV)
+    idx_bra = pd.read_csv(BRACH_IDX_CSV)
+
+    # Build features
+    combined_results_dig = build_feature_table(dfdig, idx_dig, "Digital")
+    combined_results_rad = build_feature_table(dfrad, idx_rad, "Radial")
+    combined_results_brach = build_feature_table(dfbra, idx_bra, "Brachial")
+
+    combined_results_dig = map_age(combined_results_dig, idx_dig)
+    combined_results_rad = map_age(combined_results_rad, idx_rad)
+    combined_results_brach = map_age(combined_results_brach, idx_bra)
+
+    # Save combined feature tables
+    combined_results_dig.to_csv(TAB_OUT_DIR / "combined_result_dig.csv", index=False)
+    combined_results_rad.to_csv(TAB_OUT_DIR / "combined_result_rad.csv", index=False)
+    combined_results_brach.to_csv(TAB_OUT_DIR / "combined_result_brach.csv", index=False)
+
+    # Correlations
+    sig_dig, nonsig_dig = correlate_features(combined_results_dig)
+    sig_rad, nonsig_rad = correlate_features(combined_results_rad)
+    sig_brach, nonsig_brach = correlate_features(combined_results_brach)
+
+    sig_dig.to_csv(TAB_OUT_DIR / "corr_digital_significant.csv", index=False)
+    sig_rad.to_csv(TAB_OUT_DIR / "corr_radial_significant.csv", index=False)
+    sig_brach.to_csv(TAB_OUT_DIR / "corr_brachial_significant.csv", index=False)
+
+    nonsig_dig.to_csv(TAB_OUT_DIR / "corr_digital_nonsignificant_removed.csv", index=False)
+    nonsig_rad.to_csv(TAB_OUT_DIR / "corr_radial_nonsignificant_removed.csv", index=False)
+    nonsig_brach.to_csv(TAB_OUT_DIR / "corr_brachial_nonsignificant_removed.csv", index=False)
+
+    report_removed(nonsig_dig, "Digital")
+    report_removed(nonsig_rad, "Radial")
+    report_removed(nonsig_brach, "Brachial")
+
+    # Plots
+    plot_age_trajectories(combined_results_dig, combined_results_rad, combined_results_brach)
+    plot_corr_bars(sig_dig, "a", "Digital", save_basename="corr_digital")
+    plot_corr_bars(sig_rad, "b", "Radial", save_basename="corr_radial")
+    plot_corr_bars(sig_brach, "c", "Brachial", save_basename="corr_brachial")
+
+    # Model + diagnostics (Radial → cf-PWV)
+    train_cf_pwv_model(combined_results_rad, pwv_csv=PWV_CSV)
+
+
+if __name__ == "__main__":
+    main()
