@@ -27,7 +27,6 @@ Place the required CSV files in `./data/` with the following filenames:
 - `PWs_Digital_PPG.csv`
 - `PWs_Radial_PPG.csv`
 - `PWs_Brachial_PPG.csv`
-- `PWs_Brachial_PPG.csv`
 - `indices_digital.csv`
 - `indices_radial.csv`
 - `indices_brachial.csv`
