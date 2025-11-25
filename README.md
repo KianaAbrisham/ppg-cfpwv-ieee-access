@@ -32,6 +32,6 @@ Place the required CSV files in `./data/` with the following filenames:
 ```bash
 pip install -r requirements.txt
 
-## Run
-```bash
+Run
 python paper_code.py
+
