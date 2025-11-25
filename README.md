@@ -21,7 +21,7 @@ Reproducible Python code supporting my IEEE Access paper:
 
 ## Data
 The dataset used in the paper is publicly available, but it is not redistributed in this repository.  
-Download it from: <PASTE DATASET LINK HERE>
+Download it from: https://zenodo.org/records/2633175
 
 Place the required CSV files in `./data/` with the following filenames:
 - `PWs_Digital_PPG.csv`
@@ -38,6 +38,6 @@ Place the required CSV files in `./data/` with the following filenames:
 pip install -r requirements.txt
 python paper_code.py
 
-Outputs will be saved to:
-outputs/figures/
-outputs/tables/
+# Outputs will be saved to:
+# - outputs/figures/
+# - outputs/tables/
