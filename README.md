@@ -1,7 +1,7 @@
 # PPG-based cf-PWV Estimation (Feature-based XGBoost)
 
 Reproducible Python code supporting my IEEE Access paper:  
-**DOI:** 10.1109/ACCESS.2025.3626252  
+**DOI:** https://doi.org/10.1109/ACCESS.2025.3626252  
 **IEEE Xplore:** https://ieeexplore.ieee.org/abstract/document/11218839
 
 ## What’s included
@@ -11,6 +11,9 @@ Reproducible Python code supporting my IEEE Access paper:
 - Diagnostics: predicted vs actual, residuals, Bland–Altman
 - Permutation importance
 
+## Requirements
+- Python 3.10+ (recommended)
+
 ## Repository structure
 - `paper_code.py` — main script
 - `data/` — input CSV files (not tracked in git)
@@ -18,22 +21,23 @@ Reproducible Python code supporting my IEEE Access paper:
 
 ## Data
 The dataset used in the paper is publicly available, but it is not redistributed in this repository.  
-Place the required CSV files in `./data/` with the following filenames:
+Download it from: <PASTE DATASET LINK HERE>
 
+Place the required CSV files in `./data/` with the following filenames:
 - `PWs_Digital_PPG.csv`
 - `PWs_Radial_PPG.csv`
+- `PWs_Brachial_PPG.csv`
 - `PWs_Brachial_PPG.csv`
 - `indices_digital.csv`
 - `indices_radial.csv`
 - `indices_brachial.csv`
 - `PWV.csv`
 
-## Install
+## Install & Run
+```bash
 pip install -r requirements.txt
-
-## Run
-`python paper_code.py`
+python paper_code.py
 
 Outputs will be saved to:
-- `outputs/figures/`
-- `outputs/tables/`
+outputs/figures/
+outputs/tables/
