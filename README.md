@@ -23,13 +23,13 @@ Place the required CSV files in `./data/` with the following filenames:
 - `PWs_Digital_PPG.csv`
 - `PWs_Radial_PPG.csv`
 - `PWs_Brachial_PPG.csv`
-- `digfeatures.csv`
-- `radfeature.csv`
-- `brachfeatures.csv`
+- `indices_digital.csv`
+- `indices_radial.csv`
+- `indices_brachial.csv`
 - `PWV.csv`
 
 ## Install
-`pip install -r requirements.txt`
+pip install -r requirements.txt
 
 ## Run
 `python paper_code.py`
