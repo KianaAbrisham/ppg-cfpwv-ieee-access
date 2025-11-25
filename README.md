@@ -33,3 +33,7 @@ Place the required CSV files in `./data/` with the following filenames:
 
 ## Run
 `python paper_code.py`
+
+Outputs will be saved to:
+- `outputs/figures/`
+- `outputs/tables/`
