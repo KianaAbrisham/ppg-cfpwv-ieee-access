@@ -27,11 +27,9 @@ Place the required CSV files in `./data/` with the following filenames:
 - `radfeature.csv`
 - `brachfeatures.csv`
 - `PWV.csv`
-
+- 
 ## Install
-```bash
-pip install -r requirements.txt
+`pip install -r requirements.txt`
 
-Run
-python paper_code.py
-
+## Run
+`python paper_code.py`
