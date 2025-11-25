@@ -1,6 +1,4 @@
-from pathlib import Path
-
-code = r'''"""
+"""
 paper_code.py
 
 Reproducible pipeline for:
@@ -27,7 +25,14 @@ from typing import Optional, Sequence, Tuple, List
 
 import numpy as np
 import pandas as pd
-from scipy.integrate import simps
+
+try:
+    # Newer SciPy
+    from scipy.integrate import simpson as _scipy_integrate
+except Exception:
+    # Older SciPy fallback
+    from scipy.integrate import simps as _scipy_integrate
+
 from scipy.stats import pearsonr, skew, kurtosis
 from scipy.interpolate import interp1d
 
@@ -309,8 +314,8 @@ TITLE_FS = 38
 AXLABEL_FS = 34
 TICK_FS = 33
 LEGEND_FS = 40
-POS = "#009E73"
-NEG = "#8B3E8F"
+POS = "#009E73"  # positive correlation
+NEG = "#8B3E8F"  # negative correlation
 
 
 # ============================== UTILITIES ==============================
@@ -336,6 +341,14 @@ def _require_columns(df: pd.DataFrame, cols: Sequence[str], df_name: str) -> Non
         raise KeyError(f"{df_name} is missing required columns:\n{msg}")
 
 
+def _integrate(y: np.ndarray, x: np.ndarray) -> float:
+    """SciPy integration wrapper (supports both simpson and simps)."""
+    try:
+        return float(_scipy_integrate(y, x=x))
+    except TypeError:
+        return float(_scipy_integrate(y, x))
+
+
 # ============================== HELPERS ==============================
 def width_at_level(t, x, level) -> float:
     t = np.asarray(t, dtype=float)
@@ -344,6 +357,7 @@ def width_at_level(t, x, level) -> float:
     edges = np.where(np.diff(above.astype(int)) != 0)[0]
     if edges.size < 2:
         return np.nan
+
     i = edges[0]
     denom1 = (x[i + 1] - x[i])
     if denom1 == 0:
@@ -415,11 +429,16 @@ def build_feature_table(pws_df: pd.DataFrame, indices_df: pd.DataFrame, site_pre
         f"{site_prefix}_PPGe_V",   f"{site_prefix}_PPGe_T",
         f"{site_prefix}_SI",       f"{site_prefix}_RI",
     ]
-    _require_columns(indices_df, req + (["Subject Number"] if "Subject Number" in indices_df.columns else []), f"{site_prefix} indices")
+    _require_columns(
+        indices_df,
+        req + (["Subject Number"] if "Subject Number" in indices_df.columns else []),
+        f"{site_prefix} indices",
+    )
 
     for subject_number in pws_df["Subject Number"].unique():
         try:
             idx = get_indices_row(indices_df, int(subject_number))
+
             # Pre-screen completeness
             if any(pd.isna(idx.get(c)) for c in req):
                 continue
@@ -443,9 +462,9 @@ def build_feature_table(pws_df: pd.DataFrame, indices_df: pd.DataFrame, site_pre
             x_dia, t_dia = x[dia_mask], t[dia_mask]
 
             # Areas
-            s_auc = float(simps(x_sys, t_sys))
-            d_auc = float(simps(x_dia, t_dia))
-            auc = float(simps(x, t))
+            s_auc = _integrate(x_sys, t_sys)
+            d_auc = _integrate(x_dia, t_dia)
+            auc = _integrate(x, t)
             auc_ratio = s_auc / d_auc if np.isfinite(d_auc) and d_auc != 0 else np.nan
 
             # Timing
@@ -495,7 +514,7 @@ def build_feature_table(pws_df: pd.DataFrame, indices_df: pd.DataFrame, site_pre
             else:
                 start_vals = np.full_like(x_sys, x[0])
             start_diff = np.abs(start_vals - x_sys)
-            start_area = float(simps(start_diff, t_sys))
+            start_area = _integrate(start_diff, t_sys)
             max_start_diff = float(np.nanmax(start_diff))
             med_start_diff = float(np.nanmedian(start_diff))
 
@@ -504,7 +523,7 @@ def build_feature_table(pws_df: pd.DataFrame, indices_df: pd.DataFrame, site_pre
             else:
                 end_vals = np.full_like(x_dia, sys_v)
             end_diff = np.abs(end_vals - x_dia)
-            end_area = float(simps(end_diff, t_dia))
+            end_area = _integrate(end_diff, t_dia)
             max_end_diff = float(np.nanmax(end_diff))
             med_end_diff = float(np.nanmedian(end_diff))
             datum_area_ratio = start_area / end_area if np.isfinite(end_area) and end_area != 0 else np.nan
@@ -609,7 +628,11 @@ def map_age(df_features: pd.DataFrame, indices_df: pd.DataFrame) -> pd.DataFrame
 
 
 # ============================== AGE ANALYSIS ==============================
-def correlate_features(df: pd.DataFrame, alpha: float = ALPHA_P, extra_drop: Sequence[str] = ("Subject Number",)) -> Tuple[pd.DataFrame, pd.DataFrame]:
+def correlate_features(
+    df: pd.DataFrame,
+    alpha: float = ALPHA_P,
+    extra_drop: Sequence[str] = ("Subject Number",),
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """
     Returns (sig_df, nonsig_df), both sorted by |correlation| desc.
     """
@@ -654,10 +677,13 @@ def report_removed(nonsig_df: pd.DataFrame, artery_label: str, outdir: Path = TA
 
 
 # ============================== PLOTTING ==============================
-def plot_age_trajectories(comb_dig: pd.DataFrame, comb_rad: pd.DataFrame, comb_bra: pd.DataFrame, outdir: Path = FIG_OUT_DIR) -> None:
-    """
-    Features vs. Age line plots across Digital/Radial/Brachial.
-    """
+def plot_age_trajectories(
+    comb_dig: pd.DataFrame,
+    comb_rad: pd.DataFrame,
+    comb_bra: pd.DataFrame,
+    outdir: Path = FIG_OUT_DIR,
+) -> None:
+    """Features vs. Age line plots across Digital/Radial/Brachial."""
     features = [c for c in comb_dig.columns if c not in ("Subject Number", "Age")]
     ages = sorted(comb_dig["Age"].dropna().unique())
 
@@ -712,10 +738,14 @@ def plot_age_trajectories(comb_dig: pd.DataFrame, comb_rad: pd.DataFrame, comb_b
     plt.close(fig)
 
 
-def plot_corr_bars(df_sorted: pd.DataFrame, label: str, artery_name: str, outdir: Path = FIG_OUT_DIR, save_basename: Optional[str] = None) -> None:
-    """
-    Plots ONLY significant features (p < ALPHA_P).
-    """
+def plot_corr_bars(
+    df_sorted: pd.DataFrame,
+    label: str,
+    artery_name: str,
+    outdir: Path = FIG_OUT_DIR,
+    save_basename: Optional[str] = None,
+) -> None:
+    """Plots ONLY significant features (p < ALPHA_P)."""
     if df_sorted.empty:
         print(f"({label}) {artery_name}: no significant features (p<{ALPHA_P}).")
         return
@@ -769,13 +799,13 @@ def train_cf_pwv_model(combined_results_rad: pd.DataFrame, pwv_csv: Path = PWV_C
         .rename(columns={"PWV_cf [m/s]": "cf_pwv"})
     )
 
-    # Prevent leakage & ensure numeric types
-    X = (merged_df
-         .drop(columns=["Subject Number", "Age", "cf_pwv"], errors="ignore")
-         .apply(pd.to_numeric, errors="coerce"))
+    X = (
+        merged_df
+        .drop(columns=["Subject Number", "Age", "cf_pwv"], errors="ignore")
+        .apply(pd.to_numeric, errors="coerce")
+    )
     y = pd.to_numeric(merged_df["cf_pwv"], errors="coerce")
 
-    # Drop rows with NaN target (sync X)
     mask = y.notna() & np.isfinite(y)
     X = X.loc[mask].reset_index(drop=True)
     y = y.loc[mask].reset_index(drop=True)
@@ -793,7 +823,6 @@ def train_cf_pwv_model(combined_results_rad: pd.DataFrame, pwv_csv: Path = PWV_C
                 continue
         return None
 
-    # CV setup
     n_splits = 5
     y_bins = make_strat_bins(y, n_splits=n_splits)
     if y_bins is not None:
@@ -842,7 +871,6 @@ def train_cf_pwv_model(combined_results_rad: pd.DataFrame, pwv_csv: Path = PWV_C
         )
         perm_importances.append(pi.importances_mean)
 
-    # ---- Per-fold metrics table ----
     per_fold_df = pd.DataFrame(per_fold_rows)
     per_fold_print = per_fold_df.copy()
     for col in ["MAE", "RMSE", "R2"]:
@@ -860,7 +888,6 @@ def train_cf_pwv_model(combined_results_rad: pd.DataFrame, pwv_csv: Path = PWV_C
     print("\nSummary:")
     print(summary)
 
-    # Save metrics
     per_fold_df.to_csv(TAB_OUT_DIR / "model_radial_per_fold_metrics.csv", index=False, float_format="%.3f")
     with open(TAB_OUT_DIR / "model_radial_summary.txt", "w", encoding="utf-8") as f:
         f.write("Per-fold evaluation (Radial → cf-PWV)\n")
@@ -999,9 +1026,11 @@ def train_cf_pwv_model(combined_results_rad: pd.DataFrame, pwv_csv: Path = PWV_C
     # D. Permutation importance (Top-10)
     perm_importances = np.array(perm_importances)
     perm_mean = perm_importances.mean(axis=0)
-    fi_df = (pd.DataFrame({"Feature": X.columns, "Importance": perm_mean})
-             .sort_values("Importance", ascending=False)
-             .reset_index(drop=True))
+    fi_df = (
+        pd.DataFrame({"Feature": X.columns, "Importance": perm_mean})
+        .sort_values("Importance", ascending=False)
+        .reset_index(drop=True)
+    )
 
     fi_df.to_csv(TAB_OUT_DIR / "permutation_importance_all_features.csv", index=False, float_format="%.6f")
 
@@ -1028,7 +1057,6 @@ def train_cf_pwv_model(combined_results_rad: pd.DataFrame, pwv_csv: Path = PWV_C
 def main() -> None:
     _require_files([DIG_PWS_CSV, RAD_PWS_CSV, BRACH_PWS_CSV, DIG_IDX_CSV, RAD_IDX_CSV, BRACH_IDX_CSV, PWV_CSV])
 
-    # Load data
     dfdig = _strip_columns(pd.read_csv(DIG_PWS_CSV))
     dfrad = _strip_columns(pd.read_csv(RAD_PWS_CSV))
     dfbra = _strip_columns(pd.read_csv(BRACH_PWS_CSV))
@@ -1037,7 +1065,6 @@ def main() -> None:
     idx_rad = _strip_columns(pd.read_csv(RAD_IDX_CSV))
     idx_bra = _strip_columns(pd.read_csv(BRACH_IDX_CSV))
 
-    # Build features
     combined_results_dig = build_feature_table(dfdig, idx_dig, "Digital")
     combined_results_rad = build_feature_table(dfrad, idx_rad, "Radial")
     combined_results_brach = build_feature_table(dfbra, idx_bra, "Brachial")
@@ -1046,12 +1073,10 @@ def main() -> None:
     combined_results_rad = map_age(combined_results_rad, idx_rad)
     combined_results_brach = map_age(combined_results_brach, idx_bra)
 
-    # Save combined feature tables
     combined_results_dig.to_csv(TAB_OUT_DIR / "combined_result_dig.csv", index=False)
     combined_results_rad.to_csv(TAB_OUT_DIR / "combined_result_rad.csv", index=False)
     combined_results_brach.to_csv(TAB_OUT_DIR / "combined_result_brach.csv", index=False)
 
-    # Correlations
     sig_dig, nonsig_dig = correlate_features(combined_results_dig)
     sig_rad, nonsig_rad = correlate_features(combined_results_rad)
     sig_brach, nonsig_brach = correlate_features(combined_results_brach)
@@ -1068,19 +1093,13 @@ def main() -> None:
     report_removed(nonsig_rad, "Radial")
     report_removed(nonsig_brach, "Brachial")
 
-    # Plots
     plot_age_trajectories(combined_results_dig, combined_results_rad, combined_results_brach)
     plot_corr_bars(sig_dig, "a", "Digital", save_basename="corr_digital")
     plot_corr_bars(sig_rad, "b", "Radial", save_basename="corr_radial")
     plot_corr_bars(sig_brach, "c", "Brachial", save_basename="corr_brachial")
 
-    # Model + diagnostics (Radial → cf-PWV)
     train_cf_pwv_model(combined_results_rad, pwv_csv=PWV_CSV)
 
 
 if __name__ == "__main__":
     main()
-'''
-out_path = Path("/mnt/data/paper_code.py")
-out_path.write_text(code, encoding="utf-8")
-str(out_path)
