@@ -1,7 +1,7 @@
 """
 paper_code.py
 
-Reproducible pipeline for:
+Research analysis pipeline for:
 - PPG/SDPPG feature extraction
 - Age correlation analysis (Pearson r, p-values)
 - cf-PWV estimation using XGBoost (cross-validation + diagnostics)
@@ -56,7 +56,7 @@ ALPHA_P = 0.05               # significance threshold for correlations
 PIR_WINDOW_MS = 10           # Δt for PIR (ms) — FIXED across subjects
 
 # Internal, descriptive names (stay in CSVs); plots map them to short labels
-AMP_COL = "Amplitude (median amplitude; 0.5H)"  # plotted as "Amplitude"
+AMP_COL = "Half peak-to-peak amplitude (0.5H)"  # plotted as "Amplitude"
 PIR_COL = f"PIR (Peak-to-Instantaneous Ratio; Δt={PIR_WINDOW_MS} ms)"  # plotted as "PIR"
 
 # ---------------------- FILE PATHS (edit as needed) ---------------------
@@ -65,8 +65,6 @@ OUT_DIR = Path("outputs")
 
 FIG_OUT_DIR = OUT_DIR / "figures"
 TAB_OUT_DIR = OUT_DIR / "tables"
-FIG_OUT_DIR.mkdir(parents=True, exist_ok=True)
-TAB_OUT_DIR.mkdir(parents=True, exist_ok=True)
 
 DIG_PWS_CSV = DATA_DIR / "PWs_Digital_PPG.csv"
 RAD_PWS_CSV = DATA_DIR / "PWs_Radial_PPG.csv"
@@ -101,7 +99,7 @@ DISPLAY_NAME = {
     "Rise Time": "Rise Time",
     "Decay Time": "Decay Time",
     "Rise–Decay Time Ratio": "Rise–Decay Time Ratio",
-    "Amplitude (median amplitude; 0.5H)": "Amplitude",
+    "Half peak-to-peak amplitude (0.5H)": "Amplitude",
     "Upslope Length": "Upslope Length",
     "Downslope Length": "Downslope Length",
     "Upslope": "Upslope",
@@ -174,7 +172,7 @@ DISPLAY_NAME_SHORT = {
     "Rise Time": "Rise Time",
     "Decay Time": "Decay Time",
     "Rise–Decay Time Ratio": "Rise–Decay Time Ratio",
-    "Amplitude (median amplitude; 0.5H)": "Amplitude",
+    "Half peak-to-peak amplitude (0.5H)": "Amplitude",
     "Upslope Length": "Upslope Length",
     "Downslope Length": "Downslope Length",
     "Upslope": "Upslope",
@@ -229,12 +227,12 @@ def label_for(feature_key: str) -> str:
 
 # ============================== DISPLAY UNITS (by INTERNAL key) ==============================
 DISPLAY_UNITS = {
-    "AUC": "Amplitude (V)",
-    "S-AUC": "Amplitude (V)",
-    "D-AUC": "Amplitude (V)",
-    "Start Datum Area": "Amplitude (V)",
-    "End Datum Area": "Amplitude (V)",
-    "Amplitude (median amplitude; 0.5H)": "Amplitude (V)",
+    "AUC": "Area (input units × s)",
+    "S-AUC": "Area (input units × s)",
+    "D-AUC": "Area (input units × s)",
+    "Start Datum Area": "Area (input units × s)",
+    "End Datum Area": "Area (input units × s)",
+    "Half peak-to-peak amplitude (0.5H)": "Signal amplitude (input units)",
 
     "Rise Time": "Time (s)",
     "Decay Time": "Time (s)",
@@ -243,27 +241,27 @@ DISPLAY_UNITS = {
 
     "Upslope Length": "Length (a.u.)",
     "Downslope Length": "Length (a.u.)",
-    "Upslope": "Gradient (V/s)",
-    "Downslope": "Gradient (V/s)",
-    "Onset-End Slope": "Rate (V/s)",
+    "Upslope": "Gradient (input amplitude units/s)",
+    "Downslope": "Gradient (input amplitude units/s)",
+    "Onset-End Slope": "Rate (input amplitude units/s)",
     "Slope Ratio": "Ratio (a.u.)",
-    "Length-Height Ratio": "Ratio (a.u.)",
+    "Length-Height Ratio": "Time/amplitude (s/input units)",
     "Slope Length Ratio": "Ratio (a.u.)",
     "Upslope Length Ratio": "Ratio (a.u.)",
     "Downslope Length Ratio": "Ratio (a.u.)",
     "Datum Area Ratio": "Ratio (a.u.)",
 
-    "Max Start Datum Diff.": "Amplitude (V)",
-    "Max End Datum Diff.": "Amplitude (V)",
-    "Med. Start Datum Diff.": "Amplitude (V)",
-    "Med. End Datum Diff.": "Amplitude (V)",
+    "Max Start Datum Diff.": "Signal amplitude (input units)",
+    "Max End Datum Diff.": "Signal amplitude (input units)",
+    "Med. Start Datum Diff.": "Signal amplitude (input units)",
+    "Med. End Datum Diff.": "Signal amplitude (input units)",
 
     "Pulse Width": "Time (s)",
     "Systolic Width": "Time (s)",
     "Diastolic Width": "Time (s)",
     "Width Ratio": "Ratio (a.u.)",
 
-    "Variance": "Variance (V²)",
+    "Variance": "Variance (input amplitude units²)",
     "Skew": "Skewness (std)",
     "Kurtosis": "Kurtosis",
 
@@ -277,15 +275,15 @@ DISPLAY_UNITS = {
     "d/a": "Ratio (a.u.)",
     "e/a": "Ratio (a.u.)",
 
-    "slope_a-b": "Gradient (V/s)",
-    "slope_a-c": "Gradient (V/s)",
-    "slope_a-d": "Gradient (V/s)",
-    "slope_a-e": "Gradient (V/s)",
-    "slope_b-c": "Gradient (V/s)",
-    "slope_b-d": "Gradient (V/s)",
-    "slope_b-e": "Gradient (V/s)",
-    "slope_c-e": "Gradient (V/s)",
-    "slope_d-e": "Gradient (V/s)",
+    "slope_a-b": "SDPPG gradient (input SDPPG units/s)",
+    "slope_a-c": "SDPPG gradient (input SDPPG units/s)",
+    "slope_a-d": "SDPPG gradient (input SDPPG units/s)",
+    "slope_a-e": "SDPPG gradient (input SDPPG units/s)",
+    "slope_b-c": "SDPPG gradient (input SDPPG units/s)",
+    "slope_b-d": "SDPPG gradient (input SDPPG units/s)",
+    "slope_b-e": "SDPPG gradient (input SDPPG units/s)",
+    "slope_c-e": "SDPPG gradient (input SDPPG units/s)",
+    "slope_d-e": "SDPPG gradient (input SDPPG units/s)",
 
     "t_a-b": "Time (s)",
     "t_a-c": "Time (s)",
@@ -395,28 +393,67 @@ def calculate_pir(signal: np.ndarray, fs: int = FS, window_ms: int = PIR_WINDOW_
     return float(num / den)
 
 
+def validate_subject_ids(frame: pd.DataFrame, name: str) -> pd.DataFrame:
+    """Require one explicit positive integer subject ID per row."""
+    frame = _strip_columns(frame)
+    if frame.columns.duplicated().any():
+        raise ValueError(f"{name}: duplicate column names after stripping whitespace.")
+    _require_columns(frame, ["Subject Number"], name)
+    ids = pd.to_numeric(frame["Subject Number"], errors="raise")
+    values = ids.to_numpy(dtype=float)
+    if (len(frame) == 0 or not np.isfinite(values).all()
+            or (values <= 0).any() or (values != np.floor(values)).any()):
+        raise ValueError(f"{name}: Subject Number must contain positive integers without missing values.")
+    if ids.duplicated().any():
+        raise ValueError(f"{name}: duplicate subject IDs would invalidate subject-wise evaluation.")
+    frame["Subject Number"] = ids.astype(np.int64)
+    return frame
+
+
+def extract_waveform(row: pd.Series) -> np.ndarray:
+    """Exclude named metadata; trim trailing padding without closing internal gaps.
+
+    All columns other than Subject Number and Unnamed export-index columns
+    must contain waveform samples in acquisition order. See the README.
+    """
+    columns = [column for column in row.index
+               if column != "Subject Number" and not str(column).startswith("Unnamed:")]
+    if not columns:
+        raise ValueError("No waveform sample columns.")
+    values = pd.to_numeric(row[columns], errors="raise").to_numpy(dtype=float)
+    present = np.flatnonzero(~np.isnan(values))
+    if not len(present):
+        raise ValueError("Waveform has no samples.")
+    values = values[:present[-1] + 1]
+    if len(values) < 5 or not np.isfinite(values).all():
+        raise ValueError("Waveform needs at least five finite samples, with no leading/internal gaps.")
+    if np.ptp(values) == 0:
+        raise ValueError("Waveform is constant.")
+    return values
+
+
 def get_indices_row(indices_df: pd.DataFrame, subject_number: int) -> pd.Series:
-    cols = [c.strip() for c in indices_df.columns]
-    if "Subject Number" in cols:
-        tmp = indices_df.copy()
-        tmp.columns = cols
-        row = tmp.loc[tmp["Subject Number"] == subject_number]
-        if row.empty:
-            raise KeyError(f"Subject {subject_number} not found in indices file.")
-        return row.iloc[0]
-    # fallback: assume row order matches subject_number starting from 1
-    return indices_df.iloc[int(subject_number) - 1]
+    _require_columns(indices_df, ["Subject Number"], "indices")
+    rows = indices_df.loc[indices_df["Subject Number"] == subject_number]
+    if len(rows) != 1:
+        raise ValueError(f"Subject {subject_number} needs exactly one matching indices row.")
+    return rows.iloc[0]
+
+
+class InvalidSubject(ValueError):
+    """An expected input-quality exclusion, recorded with its subject ID."""
 
 
 # =========================== FEATURE BUILDING ===========================
 def build_feature_table(pws_df: pd.DataFrame, indices_df: pd.DataFrame, site_prefix: str) -> pd.DataFrame:
-    pws_df = _strip_columns(pws_df)
-    indices_df = _strip_columns(indices_df)
-
-    _require_columns(pws_df, ["Subject Number"], f"{site_prefix} PWs")
+    pws_df = validate_subject_ids(pws_df, f"{site_prefix} PWs")
+    indices_df = validate_subject_ids(indices_df, f"{site_prefix} indices")
     _require_columns(indices_df, ["Age"], f"{site_prefix} indices")
-
+    missing = set(pws_df["Subject Number"]) - set(indices_df["Subject Number"])
+    if missing:
+        raise ValueError(f"{site_prefix}: missing indices for subject IDs {sorted(missing)[:10]}.")
     rows: List[dict] = []
+    exclusions = []
 
     # Required fields to declare an index row "complete"
     req = [
@@ -439,16 +476,18 @@ def build_feature_table(pws_df: pd.DataFrame, indices_df: pd.DataFrame, site_pre
         try:
             idx = get_indices_row(indices_df, int(subject_number))
 
-            # Pre-screen completeness
-            if any(pd.isna(idx.get(c)) for c in req):
-                continue
-
-            # Load waveform (single pulse)
-            row_sig = pws_df.loc[pws_df["Subject Number"] == subject_number].iloc[0]
-            x = row_sig.iloc[2:].dropna().astype(float).to_numpy()
-            if x.size < 5:
-                continue
+            # Expected input defects become explicit, durable exclusions.
+            try:
+                required_values = pd.to_numeric(idx[req + ["Age"]], errors="raise").to_numpy(dtype=float)
+                if not np.isfinite(required_values).all() or float(idx["Age"]) <= 0:
+                    raise ValueError("Missing/nonfinite fiducials or invalid age.")
+                row_sig = pws_df.loc[pws_df["Subject Number"] == subject_number].iloc[0]
+                x = extract_waveform(row_sig)
+            except (ValueError, TypeError) as error:
+                raise InvalidSubject(str(error)) from error
             t = np.arange(x.size, dtype=float) / FS
+            if not t[1] <= float(idx[f"{site_prefix}_PPGsys_T"]) <= t[-2]:
+                raise InvalidSubject("Systolic time must leave at least two samples in each phase; times are seconds.")
 
             # Indices
             sys_v = float(idx[f"{site_prefix}_PPGsys_V"])
@@ -606,24 +645,25 @@ def build_feature_table(pws_df: pd.DataFrame, indices_df: pd.DataFrame, site_pre
                 "AGI_mod": (bV - cV - dV) / aV if aV != 0 else np.nan,
             })
 
-        except Exception as e:
-            print(f"[{site_prefix}] Subject {subject_number}: {e}")
+        except InvalidSubject as error:
+            exclusions.append({"Subject Number": int(subject_number), "Reason": str(error)})
 
-    return pd.DataFrame(rows)
+    if not rows:
+        raise ValueError(f"{site_prefix}: no valid subjects; exclusions: {exclusions[:5]}")
+    result = pd.DataFrame(rows).replace([np.inf, -np.inf], np.nan)
+    result.attrs["exclusions"] = exclusions
+    print(f"[{site_prefix}] retained {len(rows)} subjects; excluded {len(exclusions)}.")
+    return result
 
 
 def map_age(df_features: pd.DataFrame, indices_df: pd.DataFrame) -> pd.DataFrame:
-    indices_df = _strip_columns(indices_df)
-    if "Age" not in indices_df.columns:
-        raise KeyError("Indices file must contain an 'Age' column.")
-
+    indices_df = validate_subject_ids(indices_df, "indices")
+    _require_columns(indices_df, ["Age"], "indices")
     df = df_features.copy()
-    if "Subject Number" in indices_df.columns:
-        age_map = dict(zip(indices_df["Subject Number"], indices_df["Age"]))
-    else:
-        age_map = dict(zip(np.arange(1, len(indices_df) + 1), indices_df["Age"]))
-
-    df["Age"] = df["Subject Number"].map(age_map)
+    age_map = indices_df.set_index("Subject Number")["Age"]
+    df["Age"] = pd.to_numeric(df["Subject Number"].map(age_map), errors="raise")
+    if not np.isfinite(df["Age"]).all() or (df["Age"] <= 0).any():
+        raise ValueError("Every retained subject must have a finite positive age.")
     return df
 
 
@@ -785,30 +825,35 @@ def plot_corr_bars(
 
 
 # ============================== MODELING (Radial) ==============================
+def prepare_regression_data(features: pd.DataFrame, targets: pd.DataFrame) -> pd.DataFrame:
+    """Align once by unique subject ID; never infer correspondence from row order."""
+    features = validate_subject_ids(features, "features")
+    targets = validate_subject_ids(targets, "PWV.csv")
+    _require_columns(targets, ["PWV_cf [m/s]"], "PWV.csv")
+    targets["PWV_cf [m/s]"] = pd.to_numeric(targets["PWV_cf [m/s]"], errors="raise")
+    values = targets["PWV_cf [m/s]"]
+    if not np.isfinite(values).all() or (values <= 0).any():
+        raise ValueError("cf-PWV targets must be finite, positive and in m/s.")
+    merged = features.merge(targets[["Subject Number", "PWV_cf [m/s]"]],
+                            on="Subject Number", how="left", validate="one_to_one", indicator=True)
+    if (merged["_merge"] != "both").any():
+        raise ValueError("Some retained feature subjects have no matching cf-PWV target.")
+    return merged.drop(columns="_merge").rename(columns={"PWV_cf [m/s]": "cf_pwv"})
+
+
 def train_cf_pwv_model(combined_results_rad: pd.DataFrame, pwv_csv: Path = PWV_CSV) -> None:
-    pwv_df = _strip_columns(pd.read_csv(pwv_csv))
-    _require_columns(pwv_df, ["Subject Number", "PWV_cf [m/s]"], "PWV.csv")
-
-    merged_df = (
-        pd.merge(
-            combined_results_rad.copy(),
-            pwv_df[["Subject Number", "PWV_cf [m/s]"]],
-            on="Subject Number",
-            how="inner",
-        )
-        .rename(columns={"PWV_cf [m/s]": "cf_pwv"})
-    )
-
-    X = (
-        merged_df
-        .drop(columns=["Subject Number", "Age", "cf_pwv"], errors="ignore")
-        .apply(pd.to_numeric, errors="coerce")
-    )
-    y = pd.to_numeric(merged_df["cf_pwv"], errors="coerce")
-
-    mask = y.notna() & np.isfinite(y)
-    X = X.loc[mask].reset_index(drop=True)
-    y = y.loc[mask].reset_index(drop=True)
+    merged_df = prepare_regression_data(combined_results_rad, pd.read_csv(pwv_csv))
+    if len(merged_df) < 10:
+        raise ValueError("Five-fold regression needs at least ten retained subjects for fold R².")
+    X = (merged_df.drop(columns=["Subject Number", "Age", "cf_pwv"], errors="ignore")
+         .apply(pd.to_numeric, errors="raise").replace([np.inf, -np.inf], np.nan))
+    if X.shape[1] == 0 or X.isna().all().all():
+        raise ValueError("No usable regression features.")
+    y = merged_df["cf_pwv"].reset_index(drop=True)
+    X = X.reset_index(drop=True)
+    FIG_OUT_DIR.mkdir(parents=True, exist_ok=True)
+    TAB_OUT_DIR.mkdir(parents=True, exist_ok=True)
+    prediction_rows = []
 
     def make_strat_bins(y_series, n_splits=5, max_bins=10, min_bins=3):
         """Quantile bins for stratified CV (ensures ≥ n_splits samples per bin)."""
@@ -851,6 +896,10 @@ def train_cf_pwv_model(combined_results_rad: pd.DataFrame, pwv_csv: Path = PWV_C
         )
         model.fit(X_train, y_train)
         y_pred = model.predict(X_test)
+        prediction_rows.extend({"Subject Number": int(merged_df.iloc[row]["Subject Number"]),
+                                "Fold": i, "Actual_cf_pwv_m_s": float(actual),
+                                "Predicted_cf_pwv_m_s": float(predicted)}
+                               for row, actual, predicted in zip(te, y_test, y_pred))
 
         mae = mean_absolute_error(y_test, y_pred)
         # Avoid the squared argument, which was removed in scikit-learn 1.6.
@@ -868,10 +917,11 @@ def train_cf_pwv_model(combined_results_rad: pd.DataFrame, pwv_csv: Path = PWV_C
 
         pi = permutation_importance(
             model, X_test, y_test,
-            n_repeats=10, random_state=RANDOM_STATE, n_jobs=-1
+            n_repeats=10, random_state=RANDOM_STATE, n_jobs=1
         )
         perm_importances.append(pi.importances_mean)
 
+    pd.DataFrame(prediction_rows).to_csv(TAB_OUT_DIR / "out_of_fold_predictions.csv", index=False)
     per_fold_df = pd.DataFrame(per_fold_rows)
     per_fold_print = per_fold_df.copy()
     for col in ["MAE", "RMSE", "R2"]:
@@ -1046,7 +1096,12 @@ def train_cf_pwv_model(combined_results_rad: pd.DataFrame, pwv_csv: Path = PWV_C
     ax.tick_params(axis="y", labelsize=11)
     ax.tick_params(axis="x", labelsize=11)
     ax.xaxis.set_major_locator(MaxNLocator(6))
-    ax.set_xlim(0, float(fi_top["Importance"].max()) * 1.06 if len(fi_top) else 1.0)
+    if len(fi_top):
+        lower = min(0.0, float(fi_top["Importance"].min()))
+        upper = max(0.0, float(fi_top["Importance"].max()))
+        padding = max((upper - lower) * 0.06, 0.01)
+        ax.set_xlim(lower - padding, upper + padding)
+    ax.axvline(0, color="0.5", linewidth=1)
     fig.subplots_adjust(left=0.27, right=0.98, bottom=0.22, top=0.96)
     fig.savefig(FIG_OUT_DIR / "feature_importance_cfPWV.png", dpi=600, bbox_inches="tight", pad_inches=0.1)
     fig.savefig(FIG_OUT_DIR / "feature_importance_cfPWV.pdf", dpi=600, bbox_inches="tight")
@@ -1058,6 +1113,8 @@ def train_cf_pwv_model(combined_results_rad: pd.DataFrame, pwv_csv: Path = PWV_C
 def main() -> None:
     _require_files([DIG_PWS_CSV, RAD_PWS_CSV, BRACH_PWS_CSV, DIG_IDX_CSV, RAD_IDX_CSV, BRACH_IDX_CSV, PWV_CSV])
 
+    FIG_OUT_DIR.mkdir(parents=True, exist_ok=True)
+    TAB_OUT_DIR.mkdir(parents=True, exist_ok=True)
     dfdig = _strip_columns(pd.read_csv(DIG_PWS_CSV))
     dfrad = _strip_columns(pd.read_csv(RAD_PWS_CSV))
     dfbra = _strip_columns(pd.read_csv(BRACH_PWS_CSV))
@@ -1069,6 +1126,11 @@ def main() -> None:
     combined_results_dig = build_feature_table(dfdig, idx_dig, "Digital")
     combined_results_rad = build_feature_table(dfrad, idx_rad, "Radial")
     combined_results_brach = build_feature_table(dfbra, idx_bra, "Brachial")
+
+    for site, features in [("digital", combined_results_dig), ("radial", combined_results_rad),
+                           ("brachial", combined_results_brach)]:
+        pd.DataFrame(features.attrs["exclusions"], columns=["Subject Number", "Reason"]).to_csv(
+            TAB_OUT_DIR / f"excluded_subjects_{site}.csv", index=False)
 
     combined_results_dig = map_age(combined_results_dig, idx_dig)
     combined_results_rad = map_age(combined_results_rad, idx_rad)
