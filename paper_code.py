@@ -853,7 +853,8 @@ def train_cf_pwv_model(combined_results_rad: pd.DataFrame, pwv_csv: Path = PWV_C
         y_pred = model.predict(X_test)
 
         mae = mean_absolute_error(y_test, y_pred)
-        rmse = mean_squared_error(y_test, y_pred, squared=False)
+        # Avoid the squared argument, which was removed in scikit-learn 1.6.
+        rmse = float(np.sqrt(mean_squared_error(y_test, y_pred)))
         r2 = r2_score(y_test, y_pred)
 
         mae_list.append(mae)
