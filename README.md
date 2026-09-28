@@ -109,6 +109,12 @@ Outputs go to `outputs/figures/` and `outputs/tables/`; another run overwrites f
 The original plotting script does not save models. The [public-data validation runner](docs/PUBLIC_DATA_VALIDATION.md) additionally saves and verifies five native fold checkpoints; these are evaluation models, not a clinical deployment.
 See [validation](docs/VALIDATION.md) for the checks actually completed.
 
+## Research code and validation work
+
+The feature-analysis script comes from Kiana Pilevar Abrisham's research associated with the cited IEEE Access paper. Later implementation changes, input-integrity checks, documentation, data conversion, and the recorded numerical validation were completed with AI coding assistance. The public-data runner uses the feature extraction identified by the source commit and hash in its [validation report](docs/PUBLIC_DATA_VALIDATION.md).
+
+Recorded checks were run in a hosted Linux CPU environment. See the [portfolio development notes](https://github.com/KianaAbrisham/KianaAbrisham/blob/main/docs/DEVELOPMENT.md) for execution provenance and the scope of AI assistance.
+
 ## License
 
 MIT — see [LICENSE](LICENSE).

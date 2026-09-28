@@ -48,16 +48,18 @@ from xgboost import XGBRegressor
 
 
 # ========================== CONFIG & CONSTANTS ==========================
-FS = 500                     # Sampling rate (Hz)
+FS = 500  # Sampling rate (Hz)
 RANDOM_STATE = 42
-ALPHA_P = 0.05               # significance threshold for correlations
+ALPHA_P = 0.05  # significance threshold for correlations
 
 # PIR parameters (definition agreed)
-PIR_WINDOW_MS = 10           # Δt for PIR (ms) — FIXED across subjects
+PIR_WINDOW_MS = 10  # Δt for PIR (ms) — FIXED across subjects
 
 # Internal, descriptive names (stay in CSVs); plots map them to short labels
 AMP_COL = "Half peak-to-peak amplitude (0.5H)"  # plotted as "Amplitude"
-PIR_COL = f"PIR (Peak-to-Instantaneous Ratio; Δt={PIR_WINDOW_MS} ms)"  # plotted as "PIR"
+PIR_COL = (
+    f"PIR (Peak-to-Instantaneous Ratio; Δt={PIR_WINDOW_MS} ms)"  # plotted as "PIR"
+)
 
 # ---------------------- FILE PATHS (edit as needed) ---------------------
 DATA_DIR = Path("data")
@@ -78,15 +80,18 @@ PWV_CSV = DATA_DIR / "PWV.csv"
 
 
 # ============================== DISPLAY ==============================
-mpl.rcParams.update({
-    "font.family": ["Times New Roman", "Times", "DejaVu Serif"],
-    "pdf.fonttype": 42, "ps.fonttype": 42,
-    "mathtext.fontset": "custom",
-    "mathtext.rm": "Times New Roman",
-    "mathtext.it": "Times New Roman:italic",
-    "mathtext.bf": "Times New Roman:bold",
-    "mathtext.default": "it",
-})
+mpl.rcParams.update(
+    {
+        "font.family": ["Times New Roman", "Times", "DejaVu Serif"],
+        "pdf.fonttype": 42,
+        "ps.fonttype": 42,
+        "mathtext.fontset": "custom",
+        "mathtext.rm": "Times New Roman",
+        "mathtext.it": "Times New Roman:italic",
+        "mathtext.bf": "Times New Roman:bold",
+        "mathtext.default": "it",
+    }
+)
 
 
 # ============================== DISPLAY NAMES (canonical) ==============================
@@ -127,13 +132,11 @@ DISPLAY_NAME = {
     f"PIR (Peak-to-Instantaneous Ratio; Δt={PIR_WINDOW_MS} ms)": "Peak-to-Instantaneous Ratio (PIR)",
     "SI": "Stiffness Index (SI)",
     "RI": "Reflection Index (RI)",
-
     # SDPPG amplitudes
     "b/a": r"$b/a$",
     "c/a": r"$c/a$",
     "d/a": r"$d/a$",
     "e/a": r"$e/a$",
-
     # SDPPG slopes
     "slope_a-b": r"$\mathrm{slope}_{a-b}$",
     "slope_a-c": r"$\mathrm{slope}_{a-c}$",
@@ -144,7 +147,6 @@ DISPLAY_NAME = {
     "slope_b-e": r"$\mathrm{slope}_{b-e}$",
     "slope_c-e": r"$\mathrm{slope}_{c-e}$",
     "slope_d-e": r"$\mathrm{slope}_{d-e}$",
-
     # SDPPG intervals
     "t_a-b": r"$t_{a-b}$",
     "t_a-c": r"$t_{a-c}$",
@@ -156,7 +158,6 @@ DISPLAY_NAME = {
     "t_c-e": r"$t_{c-e}$",
     "t_c-d": r"$t_{c-d}$",
     "t_d-e": r"$t_{d-e}$",
-
     # SDPPG aging indices
     "AGI_int": r"$\mathrm{AGI}_{\mathrm{int}}$",
     "AGI_mod": r"$\mathrm{AGI}_{\mathrm{mod}}$",
@@ -200,9 +201,11 @@ DISPLAY_NAME_SHORT = {
     f"PIR (Peak-to-Instantaneous Ratio; Δt={PIR_WINDOW_MS} ms)": "PIR",
     "SI": "SI",
     "RI": "RI",
-
     # TeX unchanged
-    "b/a": r"$b/a$", "c/a": r"$c/a$", "d/a": r"$d/a$", "e/a": r"$e/a$",
+    "b/a": r"$b/a$",
+    "c/a": r"$c/a$",
+    "d/a": r"$d/a$",
+    "e/a": r"$e/a$",
     "slope_a-b": r"$\mathrm{slope}_{a-b}$",
     "slope_a-c": r"$\mathrm{slope}_{a-c}$",
     "slope_a-d": r"$\mathrm{slope}_{a-d}$",
@@ -212,16 +215,26 @@ DISPLAY_NAME_SHORT = {
     "slope_b-e": r"$\mathrm{slope}_{b-e}$",
     "slope_c-e": r"$\mathrm{slope}_{c-e}$",
     "slope_d-e": r"$\mathrm{slope}_{d-e}$",
-    "t_a-b": r"$t_{a-b}$", "t_a-c": r"$t_{a-c}$", "t_a-d": r"$t_{a-d}$", "t_a-e": r"$t_{a-e}$",
-    "t_b-c": r"$t_{b-c}$", "t_b-d": r"$t_{b-d}$", "t_b-e": r"$t_{b-e}$",
-    "t_c-e": r"$t_{c-e}$", "t_c-d": r"$t_{c-d}$", "t_d-e": r"$t_{d-e}$",
-    "AGI_int": r"$\mathrm{AGI}_{\mathrm{int}}$", "AGI_mod": r"$\mathrm{AGI}_{\mathrm{mod}}$",
+    "t_a-b": r"$t_{a-b}$",
+    "t_a-c": r"$t_{a-c}$",
+    "t_a-d": r"$t_{a-d}$",
+    "t_a-e": r"$t_{a-e}$",
+    "t_b-c": r"$t_{b-c}$",
+    "t_b-d": r"$t_{b-d}$",
+    "t_b-e": r"$t_{b-e}$",
+    "t_c-e": r"$t_{c-e}$",
+    "t_c-d": r"$t_{c-d}$",
+    "t_d-e": r"$t_{d-e}$",
+    "AGI_int": r"$\mathrm{AGI}_{\mathrm{int}}$",
+    "AGI_mod": r"$\mathrm{AGI}_{\mathrm{mod}}$",
 }
 
 
 def label_for(feature_key: str) -> str:
     if USE_SHORT_LABELS:
-        return DISPLAY_NAME_SHORT.get(feature_key, DISPLAY_NAME.get(feature_key, feature_key))
+        return DISPLAY_NAME_SHORT.get(
+            feature_key, DISPLAY_NAME.get(feature_key, feature_key)
+        )
     return DISPLAY_NAME.get(feature_key, feature_key)
 
 
@@ -233,12 +246,10 @@ DISPLAY_UNITS = {
     "Start Datum Area": "Area (input units × s)",
     "End Datum Area": "Area (input units × s)",
     "Half peak-to-peak amplitude (0.5H)": "Signal amplitude (input units)",
-
     "Rise Time": "Time (s)",
     "Decay Time": "Time (s)",
     "Rise–Decay Time Ratio": "Ratio (a.u.)",
     "AUC Ratio": "Ratio (a.u.)",
-
     "Upslope Length": "Length (a.u.)",
     "Downslope Length": "Length (a.u.)",
     "Upslope": "Gradient (input amplitude units/s)",
@@ -250,31 +261,24 @@ DISPLAY_UNITS = {
     "Upslope Length Ratio": "Ratio (a.u.)",
     "Downslope Length Ratio": "Ratio (a.u.)",
     "Datum Area Ratio": "Ratio (a.u.)",
-
     "Max Start Datum Diff.": "Signal amplitude (input units)",
     "Max End Datum Diff.": "Signal amplitude (input units)",
     "Med. Start Datum Diff.": "Signal amplitude (input units)",
     "Med. End Datum Diff.": "Signal amplitude (input units)",
-
     "Pulse Width": "Time (s)",
     "Systolic Width": "Time (s)",
     "Diastolic Width": "Time (s)",
     "Width Ratio": "Ratio (a.u.)",
-
     "Variance": "Variance (input amplitude units²)",
     "Skew": "Skewness (std)",
     "Kurtosis": "Kurtosis",
-
     f"PIR (Peak-to-Instantaneous Ratio; Δt={PIR_WINDOW_MS} ms)": "Ratio (a.u.)",
-
     "SI": "Velocity (m/s)",
     "RI": "Ratio (a.u.)",
-
     "b/a": "Ratio (a.u.)",
     "c/a": "Ratio (a.u.)",
     "d/a": "Ratio (a.u.)",
     "e/a": "Ratio (a.u.)",
-
     "slope_a-b": "SDPPG gradient (input SDPPG units/s)",
     "slope_a-c": "SDPPG gradient (input SDPPG units/s)",
     "slope_a-d": "SDPPG gradient (input SDPPG units/s)",
@@ -284,7 +288,6 @@ DISPLAY_UNITS = {
     "slope_b-e": "SDPPG gradient (input SDPPG units/s)",
     "slope_c-e": "SDPPG gradient (input SDPPG units/s)",
     "slope_d-e": "SDPPG gradient (input SDPPG units/s)",
-
     "t_a-b": "Time (s)",
     "t_a-c": "Time (s)",
     "t_a-d": "Time (s)",
@@ -295,7 +298,6 @@ DISPLAY_UNITS = {
     "t_c-e": "Time (s)",
     "t_c-d": "Time (s)",
     "t_d-e": "Time (s)",
-
     "AGI_int": "AGI (a.u.)",
     "AGI_mod": "AGI (a.u.)",
 }
@@ -322,7 +324,8 @@ def _require_files(paths: Sequence[Path]) -> None:
     if missing:
         msg = "\n".join(f"  - {p.as_posix()}" for p in missing)
         raise FileNotFoundError(
-            "Missing input CSVs. Put the required files in ./data/ (see README) and try again:\n" + msg
+            "Missing input CSVs. Put the required files in ./data/ (see README) and try again:\n"
+            + msg
         )
 
 
@@ -357,13 +360,13 @@ def width_at_level(t, x, level) -> float:
         return np.nan
 
     i = edges[0]
-    denom1 = (x[i + 1] - x[i])
+    denom1 = x[i + 1] - x[i]
     if denom1 == 0:
         return np.nan
     t1 = t[i] + (level - x[i]) * (t[i + 1] - t[i]) / denom1
 
     j = edges[-1]
-    denom2 = (x[j + 1] - x[j])
+    denom2 = x[j + 1] - x[j]
     if denom2 == 0:
         return np.nan
     t2 = t[j] + (level - x[j]) * (t[j + 1] - t[j]) / denom2
@@ -371,7 +374,9 @@ def width_at_level(t, x, level) -> float:
     return float(t2 - t1)
 
 
-def calculate_pir(signal: np.ndarray, fs: int = FS, window_ms: int = PIR_WINDOW_MS) -> float:
+def calculate_pir(
+    signal: np.ndarray, fs: int = FS, window_ms: int = PIR_WINDOW_MS
+) -> float:
     """
     Peak-to-Instantaneous Ratio using a fixed time window:
       PIR = |x_peak| / |x(peak - Δt)|  where Δt = window_ms
@@ -401,11 +406,19 @@ def validate_subject_ids(frame: pd.DataFrame, name: str) -> pd.DataFrame:
     _require_columns(frame, ["Subject Number"], name)
     ids = pd.to_numeric(frame["Subject Number"], errors="raise")
     values = ids.to_numpy(dtype=float)
-    if (len(frame) == 0 or not np.isfinite(values).all()
-            or (values <= 0).any() or (values != np.floor(values)).any()):
-        raise ValueError(f"{name}: Subject Number must contain positive integers without missing values.")
+    if (
+        len(frame) == 0
+        or not np.isfinite(values).all()
+        or (values <= 0).any()
+        or (values != np.floor(values)).any()
+    ):
+        raise ValueError(
+            f"{name}: Subject Number must contain positive integers without missing values."
+        )
     if ids.duplicated().any():
-        raise ValueError(f"{name}: duplicate subject IDs would invalidate subject-wise evaluation.")
+        raise ValueError(
+            f"{name}: duplicate subject IDs would invalidate subject-wise evaluation."
+        )
     frame["Subject Number"] = ids.astype(np.int64)
     return frame
 
@@ -416,17 +429,22 @@ def extract_waveform(row: pd.Series) -> np.ndarray:
     All columns other than Subject Number and Unnamed export-index columns
     must contain waveform samples in acquisition order. See the README.
     """
-    columns = [column for column in row.index
-               if column != "Subject Number" and not str(column).startswith("Unnamed:")]
+    columns = [
+        column
+        for column in row.index
+        if column != "Subject Number" and not str(column).startswith("Unnamed:")
+    ]
     if not columns:
         raise ValueError("No waveform sample columns.")
     values = pd.to_numeric(row[columns], errors="raise").to_numpy(dtype=float)
     present = np.flatnonzero(~np.isnan(values))
     if not len(present):
         raise ValueError("Waveform has no samples.")
-    values = values[:present[-1] + 1]
+    values = values[: present[-1] + 1]
     if len(values) < 5 or not np.isfinite(values).all():
-        raise ValueError("Waveform needs at least five finite samples, with no leading/internal gaps.")
+        raise ValueError(
+            "Waveform needs at least five finite samples, with no leading/internal gaps."
+        )
     if np.ptp(values) == 0:
         raise ValueError("Waveform is constant.")
     return values
@@ -436,7 +454,9 @@ def get_indices_row(indices_df: pd.DataFrame, subject_number: int) -> pd.Series:
     _require_columns(indices_df, ["Subject Number"], "indices")
     rows = indices_df.loc[indices_df["Subject Number"] == subject_number]
     if len(rows) != 1:
-        raise ValueError(f"Subject {subject_number} needs exactly one matching indices row.")
+        raise ValueError(
+            f"Subject {subject_number} needs exactly one matching indices row."
+        )
     return rows.iloc[0]
 
 
@@ -445,26 +465,38 @@ class InvalidSubject(ValueError):
 
 
 # =========================== FEATURE BUILDING ===========================
-def build_feature_table(pws_df: pd.DataFrame, indices_df: pd.DataFrame, site_prefix: str) -> pd.DataFrame:
+def build_feature_table(
+    pws_df: pd.DataFrame, indices_df: pd.DataFrame, site_prefix: str
+) -> pd.DataFrame:
     pws_df = validate_subject_ids(pws_df, f"{site_prefix} PWs")
     indices_df = validate_subject_ids(indices_df, f"{site_prefix} indices")
     _require_columns(indices_df, ["Age"], f"{site_prefix} indices")
     missing = set(pws_df["Subject Number"]) - set(indices_df["Subject Number"])
     if missing:
-        raise ValueError(f"{site_prefix}: missing indices for subject IDs {sorted(missing)[:10]}.")
+        raise ValueError(
+            f"{site_prefix}: missing indices for subject IDs {sorted(missing)[:10]}."
+        )
     rows: List[dict] = []
     exclusions = []
 
     # Required fields to declare an index row "complete"
     req = [
-        f"{site_prefix}_PPGsys_V", f"{site_prefix}_PPGsys_T",
-        f"{site_prefix}_PPGdia_V", f"{site_prefix}_PPGdia_T",
-        f"{site_prefix}_PPGa_V",   f"{site_prefix}_PPGa_T",
-        f"{site_prefix}_PPGb_V",   f"{site_prefix}_PPGb_T",
-        f"{site_prefix}_PPGc_V",   f"{site_prefix}_PPGc_T",
-        f"{site_prefix}_PPGd_V",   f"{site_prefix}_PPGd_T",
-        f"{site_prefix}_PPGe_V",   f"{site_prefix}_PPGe_T",
-        f"{site_prefix}_SI",       f"{site_prefix}_RI",
+        f"{site_prefix}_PPGsys_V",
+        f"{site_prefix}_PPGsys_T",
+        f"{site_prefix}_PPGdia_V",
+        f"{site_prefix}_PPGdia_T",
+        f"{site_prefix}_PPGa_V",
+        f"{site_prefix}_PPGa_T",
+        f"{site_prefix}_PPGb_V",
+        f"{site_prefix}_PPGb_T",
+        f"{site_prefix}_PPGc_V",
+        f"{site_prefix}_PPGc_T",
+        f"{site_prefix}_PPGd_V",
+        f"{site_prefix}_PPGd_T",
+        f"{site_prefix}_PPGe_V",
+        f"{site_prefix}_PPGe_T",
+        f"{site_prefix}_SI",
+        f"{site_prefix}_RI",
     ]
     _require_columns(
         indices_df,
@@ -478,7 +510,9 @@ def build_feature_table(pws_df: pd.DataFrame, indices_df: pd.DataFrame, site_pre
 
             # Expected input defects become explicit, durable exclusions.
             try:
-                required_values = pd.to_numeric(idx[req + ["Age"]], errors="raise").to_numpy(dtype=float)
+                required_values = pd.to_numeric(
+                    idx[req + ["Age"]], errors="raise"
+                ).to_numpy(dtype=float)
                 if not np.isfinite(required_values).all() or float(idx["Age"]) <= 0:
                     raise ValueError("Missing/nonfinite fiducials or invalid age.")
                 row_sig = pws_df.loc[pws_df["Subject Number"] == subject_number].iloc[0]
@@ -487,7 +521,9 @@ def build_feature_table(pws_df: pd.DataFrame, indices_df: pd.DataFrame, site_pre
                 raise InvalidSubject(str(error)) from error
             t = np.arange(x.size, dtype=float) / FS
             if not t[1] <= float(idx[f"{site_prefix}_PPGsys_T"]) <= t[-2]:
-                raise InvalidSubject("Systolic time must leave at least two samples in each phase; times are seconds.")
+                raise InvalidSubject(
+                    "Systolic time must leave at least two samples in each phase; times are seconds."
+                )
 
             # Indices
             sys_v = float(idx[f"{site_prefix}_PPGsys_V"])
@@ -509,7 +545,11 @@ def build_feature_table(pws_df: pd.DataFrame, indices_df: pd.DataFrame, site_pre
             # Timing
             rise_time = float(sys_t - t[0])
             decay_time = float(t[-1] - sys_t)
-            rise_decay_ratio = decay_time / rise_time if np.isfinite(rise_time) and rise_time != 0 else np.nan
+            rise_decay_ratio = (
+                decay_time / rise_time
+                if np.isfinite(rise_time) and rise_time != 0
+                else np.nan
+            )
 
             # Amplitude & widths
             full_amp = float(np.nanmax(x) - np.nanmin(x))
@@ -521,35 +561,69 @@ def build_feature_table(pws_df: pd.DataFrame, indices_df: pd.DataFrame, site_pre
             try:
                 f_sys = interp1d(t_sys, x_sys, kind="linear", bounds_error=True)
                 sys_candidates = [tt for tt in t_sys if f_sys(tt) >= half_level]
-                sys_width = float(sys_candidates[-1] - sys_candidates[0]) if sys_candidates else np.nan
+                sys_width = (
+                    float(sys_candidates[-1] - sys_candidates[0])
+                    if sys_candidates
+                    else np.nan
+                )
             except Exception:
                 sys_width = np.nan
 
             try:
                 f_dia = interp1d(t_dia, x_dia, kind="linear", bounds_error=True)
                 dia_candidates = [tt for tt in t_dia if f_dia(tt) >= half_level]
-                dia_width = float(dia_candidates[-1] - dia_candidates[0]) if dia_candidates else np.nan
+                dia_width = (
+                    float(dia_candidates[-1] - dia_candidates[0])
+                    if dia_candidates
+                    else np.nan
+                )
             except Exception:
                 dia_width = np.nan
 
-            width_ratio = sys_width / dia_width if np.isfinite(dia_width) and dia_width != 0 else np.nan
+            width_ratio = (
+                sys_width / dia_width
+                if np.isfinite(dia_width) and dia_width != 0
+                else np.nan
+            )
 
             # Slopes/lengths
             l_up = float(np.hypot(sys_t - t[0], sys_v - x[0]))
             l_down = float(np.hypot(t[-1] - sys_t, x[-1] - sys_v))
-            slope_up = (sys_v - x[0]) / rise_time if np.isfinite(rise_time) and rise_time != 0 else np.nan
-            slope_down = (x[-1] - sys_v) / decay_time if np.isfinite(decay_time) and decay_time != 0 else np.nan
-            onset_end_slope = (x[-1] - x[0]) / (t[-1] - t[0]) if (t[-1] - t[0]) != 0 else np.nan
-            slope_ratio = slope_up / slope_down if np.isfinite(slope_down) and slope_down != 0 else np.nan
-            length_height_ratio = (t[-1] - t[0]) / full_amp if np.isfinite(full_amp) and full_amp != 0 else np.nan
-            slope_length_ratio = l_up / l_down if np.isfinite(l_down) and l_down != 0 else np.nan
+            slope_up = (
+                (sys_v - x[0]) / rise_time
+                if np.isfinite(rise_time) and rise_time != 0
+                else np.nan
+            )
+            slope_down = (
+                (x[-1] - sys_v) / decay_time
+                if np.isfinite(decay_time) and decay_time != 0
+                else np.nan
+            )
+            onset_end_slope = (
+                (x[-1] - x[0]) / (t[-1] - t[0]) if (t[-1] - t[0]) != 0 else np.nan
+            )
+            slope_ratio = (
+                slope_up / slope_down
+                if np.isfinite(slope_down) and slope_down != 0
+                else np.nan
+            )
+            length_height_ratio = (
+                (t[-1] - t[0]) / full_amp
+                if np.isfinite(full_amp) and full_amp != 0
+                else np.nan
+            )
+            slope_length_ratio = (
+                l_up / l_down if np.isfinite(l_down) and l_down != 0 else np.nan
+            )
             total_len = l_up + l_down
             up_len_ratio = l_up / total_len if total_len != 0 else np.nan
             down_len_ratio = l_down / total_len if total_len != 0 else np.nan
 
             # Datum-line features
             if sys_t != t_sys[0]:
-                start_vals = x[0] + (t_sys - t_sys[0]) / (sys_t - t_sys[0]) * (sys_v - x[0])
+                start_vals = x[0] + (t_sys - t_sys[0]) / (sys_t - t_sys[0]) * (
+                    sys_v - x[0]
+                )
             else:
                 start_vals = np.full_like(x_sys, x[0])
             start_diff = np.abs(start_vals - x_sys)
@@ -558,14 +632,20 @@ def build_feature_table(pws_df: pd.DataFrame, indices_df: pd.DataFrame, site_pre
             med_start_diff = float(np.nanmedian(start_diff))
 
             if (t_dia[-1] - sys_t) != 0:
-                end_vals = sys_v + (t_dia - sys_t) / (t_dia[-1] - sys_t) * (x[-1] - sys_v)
+                end_vals = sys_v + (t_dia - sys_t) / (t_dia[-1] - sys_t) * (
+                    x[-1] - sys_v
+                )
             else:
                 end_vals = np.full_like(x_dia, sys_v)
             end_diff = np.abs(end_vals - x_dia)
             end_area = _integrate(end_diff, t_dia)
             max_end_diff = float(np.nanmax(end_diff))
             med_end_diff = float(np.nanmedian(end_diff))
-            datum_area_ratio = start_area / end_area if np.isfinite(end_area) and end_area != 0 else np.nan
+            datum_area_ratio = (
+                start_area / end_area
+                if np.isfinite(end_area) and end_area != 0
+                else np.nan
+            )
 
             # Stats & PIR
             var = float(np.nanvar(x))
@@ -579,77 +659,98 @@ def build_feature_table(pws_df: pd.DataFrame, indices_df: pd.DataFrame, site_pre
 
             # SDPPG a–e
             aV, bV, cV, dV, eV = (
-                float(idx[f"{site_prefix}_PPGa_V"]), float(idx[f"{site_prefix}_PPGb_V"]),
-                float(idx[f"{site_prefix}_PPGc_V"]), float(idx[f"{site_prefix}_PPGd_V"]),
+                float(idx[f"{site_prefix}_PPGa_V"]),
+                float(idx[f"{site_prefix}_PPGb_V"]),
+                float(idx[f"{site_prefix}_PPGc_V"]),
+                float(idx[f"{site_prefix}_PPGd_V"]),
                 float(idx[f"{site_prefix}_PPGe_V"]),
             )
             aT, bT, cT, dT, eT = (
-                float(idx[f"{site_prefix}_PPGa_T"]), float(idx[f"{site_prefix}_PPGb_T"]),
-                float(idx[f"{site_prefix}_PPGc_T"]), float(idx[f"{site_prefix}_PPGd_T"]),
+                float(idx[f"{site_prefix}_PPGa_T"]),
+                float(idx[f"{site_prefix}_PPGb_T"]),
+                float(idx[f"{site_prefix}_PPGc_T"]),
+                float(idx[f"{site_prefix}_PPGd_T"]),
                 float(idx[f"{site_prefix}_PPGe_T"]),
             )
 
             def safe_slope(v1, v2, t1, t2):
                 return (v2 - v1) / (t2 - t1) if (t2 - t1) != 0 else np.nan
 
-            rows.append({
-                "Subject Number": int(subject_number),
-
-                "AUC": auc, "S-AUC": s_auc, "D-AUC": d_auc, "AUC Ratio": auc_ratio,
-                "Rise Time": rise_time, "Decay Time": decay_time,
-                "Rise–Decay Time Ratio": rise_decay_ratio,
-
-                AMP_COL: half_peak_amp,
-
-                "Upslope Length": l_up, "Downslope Length": l_down,
-                "Upslope": slope_up, "Downslope": slope_down, "Onset-End Slope": onset_end_slope,
-                "Slope Ratio": slope_ratio,
-                "Length-Height Ratio": length_height_ratio,
-                "Slope Length Ratio": slope_length_ratio,
-                "Upslope Length Ratio": up_len_ratio,
-                "Downslope Length Ratio": down_len_ratio,
-
-                "Start Datum Area": start_area, "End Datum Area": end_area,
-                "Datum Area Ratio": datum_area_ratio,
-                "Max Start Datum Diff.": max_start_diff, "Max End Datum Diff.": max_end_diff,
-                "Med. Start Datum Diff.": med_start_diff, "Med. End Datum Diff.": med_end_diff,
-
-                "Pulse Width": pulse_width, "Systolic Width": sys_width, "Diastolic Width": dia_width,
-                "Width Ratio": width_ratio,
-
-                "Variance": var, "Skew": skw, "Kurtosis": kurtv,
-                PIR_COL: pir,
-
-                "SI": si, "RI": ri,
-
-                "b/a": bV / aV if aV != 0 else np.nan,
-                "c/a": cV / aV if aV != 0 else np.nan,
-                "d/a": dV / aV if aV != 0 else np.nan,
-                "e/a": eV / aV if aV != 0 else np.nan,
-
-                "slope_a-b": safe_slope(aV, bV, aT, bT),
-                "slope_a-c": safe_slope(aV, cV, aT, cT),
-                "slope_a-d": safe_slope(aV, dV, aT, dT),
-                "slope_a-e": safe_slope(aV, eV, aT, eT),
-                "slope_b-c": safe_slope(bV, cV, bT, cT),
-                "slope_b-d": safe_slope(bV, dV, bT, dT),
-                "slope_b-e": safe_slope(bV, eV, bT, eT),
-                "slope_c-e": safe_slope(cV, eV, cT, eT),
-                "slope_d-e": safe_slope(dV, eV, dT, eT),
-
-                "t_a-b": bT - aT, "t_a-c": cT - aT, "t_a-d": dT - aT, "t_a-e": eT - aT,
-                "t_b-c": cT - bT, "t_b-d": dT - bT, "t_b-e": eT - bT,
-                "t_c-e": eT - cT, "t_c-d": dT - cT, "t_d-e": eT - dT,
-
-                "AGI_int": (bV - eV) / aV if aV != 0 else np.nan,
-                "AGI_mod": (bV - cV - dV) / aV if aV != 0 else np.nan,
-            })
+            rows.append(
+                {
+                    "Subject Number": int(subject_number),
+                    "AUC": auc,
+                    "S-AUC": s_auc,
+                    "D-AUC": d_auc,
+                    "AUC Ratio": auc_ratio,
+                    "Rise Time": rise_time,
+                    "Decay Time": decay_time,
+                    "Rise–Decay Time Ratio": rise_decay_ratio,
+                    AMP_COL: half_peak_amp,
+                    "Upslope Length": l_up,
+                    "Downslope Length": l_down,
+                    "Upslope": slope_up,
+                    "Downslope": slope_down,
+                    "Onset-End Slope": onset_end_slope,
+                    "Slope Ratio": slope_ratio,
+                    "Length-Height Ratio": length_height_ratio,
+                    "Slope Length Ratio": slope_length_ratio,
+                    "Upslope Length Ratio": up_len_ratio,
+                    "Downslope Length Ratio": down_len_ratio,
+                    "Start Datum Area": start_area,
+                    "End Datum Area": end_area,
+                    "Datum Area Ratio": datum_area_ratio,
+                    "Max Start Datum Diff.": max_start_diff,
+                    "Max End Datum Diff.": max_end_diff,
+                    "Med. Start Datum Diff.": med_start_diff,
+                    "Med. End Datum Diff.": med_end_diff,
+                    "Pulse Width": pulse_width,
+                    "Systolic Width": sys_width,
+                    "Diastolic Width": dia_width,
+                    "Width Ratio": width_ratio,
+                    "Variance": var,
+                    "Skew": skw,
+                    "Kurtosis": kurtv,
+                    PIR_COL: pir,
+                    "SI": si,
+                    "RI": ri,
+                    "b/a": bV / aV if aV != 0 else np.nan,
+                    "c/a": cV / aV if aV != 0 else np.nan,
+                    "d/a": dV / aV if aV != 0 else np.nan,
+                    "e/a": eV / aV if aV != 0 else np.nan,
+                    "slope_a-b": safe_slope(aV, bV, aT, bT),
+                    "slope_a-c": safe_slope(aV, cV, aT, cT),
+                    "slope_a-d": safe_slope(aV, dV, aT, dT),
+                    "slope_a-e": safe_slope(aV, eV, aT, eT),
+                    "slope_b-c": safe_slope(bV, cV, bT, cT),
+                    "slope_b-d": safe_slope(bV, dV, bT, dT),
+                    "slope_b-e": safe_slope(bV, eV, bT, eT),
+                    "slope_c-e": safe_slope(cV, eV, cT, eT),
+                    "slope_d-e": safe_slope(dV, eV, dT, eT),
+                    "t_a-b": bT - aT,
+                    "t_a-c": cT - aT,
+                    "t_a-d": dT - aT,
+                    "t_a-e": eT - aT,
+                    "t_b-c": cT - bT,
+                    "t_b-d": dT - bT,
+                    "t_b-e": eT - bT,
+                    "t_c-e": eT - cT,
+                    "t_c-d": dT - cT,
+                    "t_d-e": eT - dT,
+                    "AGI_int": (bV - eV) / aV if aV != 0 else np.nan,
+                    "AGI_mod": (bV - cV - dV) / aV if aV != 0 else np.nan,
+                }
+            )
 
         except InvalidSubject as error:
-            exclusions.append({"Subject Number": int(subject_number), "Reason": str(error)})
+            exclusions.append(
+                {"Subject Number": int(subject_number), "Reason": str(error)}
+            )
 
     if not rows:
-        raise ValueError(f"{site_prefix}: no valid subjects; exclusions: {exclusions[:5]}")
+        raise ValueError(
+            f"{site_prefix}: no valid subjects; exclusions: {exclusions[:5]}"
+        )
     result = pd.DataFrame(rows).replace([np.inf, -np.inf], np.nan)
     result.attrs["exclusions"] = exclusions
     print(f"[{site_prefix}] retained {len(rows)} subjects; excluded {len(exclusions)}.")
@@ -690,15 +791,24 @@ def correlate_features(
         rows.append((f, r, p))
 
     out = pd.DataFrame(rows, columns=["Feature", "Correlation", "P-Value"])
-    out = out.sort_values(by="Correlation", key=lambda s: s.abs(), ascending=False).reset_index(drop=True)
+    out = out.sort_values(
+        by="Correlation", key=lambda s: s.abs(), ascending=False
+    ).reset_index(drop=True)
     sig = out.loc[out["P-Value"] < alpha].reset_index(drop=True)
     nonsig = out.loc[out["P-Value"] >= alpha].reset_index(drop=True)
     return sig, nonsig
 
 
-def report_removed(nonsig_df: pd.DataFrame, artery_label: str, outdir: Path = TAB_OUT_DIR, alpha: float = ALPHA_P) -> None:
+def report_removed(
+    nonsig_df: pd.DataFrame,
+    artery_label: str,
+    outdir: Path = TAB_OUT_DIR,
+    alpha: float = ALPHA_P,
+) -> None:
     n = len(nonsig_df)
-    print(f"[{artery_label}] Non-significant features removed from bar plot (p >= {alpha}): {n}")
+    print(
+        f"[{artery_label}] Non-significant features removed from bar plot (p >= {alpha}): {n}"
+    )
     if n == 0:
         return
 
@@ -713,7 +823,9 @@ def report_removed(nonsig_df: pd.DataFrame, artery_label: str, outdir: Path = TA
         f.write(f"{artery_label} — Non-significant features (p >= {alpha})\n")
         f.write("Feature\tp-value\tcorrelation\n")
         for _, row in nonsig_df.sort_values("P-Value").iterrows():
-            f.write(f"{row['Feature']}\t{row['P-Value']:.6f}\t{row['Correlation']:+.6f}\n")
+            f.write(
+                f"{row['Feature']}\t{row['P-Value']:.6f}\t{row['Correlation']:+.6f}\n"
+            )
 
 
 # ============================== PLOTTING ==============================
@@ -733,9 +845,27 @@ def plot_age_trajectories(
     axes = axes.flatten()
 
     styles = [
-        dict(marker="o", linestyle="-",  linewidth=LINE_LW, markersize=MARKER_SZ, label="Digital"),
-        dict(marker="s", linestyle="--", linewidth=LINE_LW, markersize=MARKER_SZ, label="Radial"),
-        dict(marker="^", linestyle=":",  linewidth=LINE_LW, markersize=MARKER_SZ, label="Brachial"),
+        dict(
+            marker="o",
+            linestyle="-",
+            linewidth=LINE_LW,
+            markersize=MARKER_SZ,
+            label="Digital",
+        ),
+        dict(
+            marker="s",
+            linestyle="--",
+            linewidth=LINE_LW,
+            markersize=MARKER_SZ,
+            label="Radial",
+        ),
+        dict(
+            marker="^",
+            linestyle=":",
+            linewidth=LINE_LW,
+            markersize=MARKER_SZ,
+            label="Brachial",
+        ),
     ]
 
     for i, f in enumerate(features):
@@ -749,7 +879,11 @@ def plot_age_trajectories(
         ax.plot(bra.index, bra.values, **styles[2])
 
         title_txt = label_for(f)
-        is_math = isinstance(title_txt, str) and title_txt.startswith("$") and title_txt.endswith("$")
+        is_math = (
+            isinstance(title_txt, str)
+            and title_txt.startswith("$")
+            and title_txt.endswith("$")
+        )
         fs = TITLE_FS + (5 if is_math else 0)
 
         ax.set_title(title_txt, fontsize=fs, pad=18)
@@ -766,13 +900,27 @@ def plot_age_trajectories(
     for j in range(len(features), len(axes)):
         fig.delaxes(axes[j])
 
-    fig.subplots_adjust(top=1.0, bottom=0.11, left=0.05, right=0.995, hspace=1.6, wspace=0.8)
+    fig.subplots_adjust(
+        top=1.0, bottom=0.11, left=0.05, right=0.995, hspace=1.6, wspace=0.8
+    )
 
     handles, labels = axes[0].get_legend_handles_labels()
-    fig.legend(handles, labels, loc="lower center", bbox_to_anchor=(0.5, 0.038),
-               ncol=3, fontsize=LEGEND_FS, frameon=False)
+    fig.legend(
+        handles,
+        labels,
+        loc="lower center",
+        bbox_to_anchor=(0.5, 0.038),
+        ncol=3,
+        fontsize=LEGEND_FS,
+        frameon=False,
+    )
 
-    fig.savefig(outdir / "Figure_features_vs_age.png", dpi=600, bbox_inches="tight", pad_inches=0.2)
+    fig.savefig(
+        outdir / "Figure_features_vs_age.png",
+        dpi=600,
+        bbox_inches="tight",
+        pad_inches=0.2,
+    )
     fig.savefig(outdir / "Figure_features_vs_age.pdf", bbox_inches="tight")
     plt.show()
     plt.close(fig)
@@ -807,25 +955,46 @@ def plot_corr_bars(
     ax.set_xlim(0, r_abs.max() + 0.10)
 
     for bar, r in zip(bars, r_signed):
-        ax.text(bar.get_width() + 0.02, bar.get_y() + bar.get_height() / 2,
-                f"{r:+.2f}", ha="left", va="center", fontsize=12, clip_on=False)
+        ax.text(
+            bar.get_width() + 0.02,
+            bar.get_y() + bar.get_height() / 2,
+            f"{r:+.2f}",
+            ha="left",
+            va="center",
+            fontsize=12,
+            clip_on=False,
+        )
 
     ax.tick_params(axis="x", which="both", bottom=False, top=False, labelbottom=False)
     ax.grid(False)
-    ax.text(0.5, -0.035, f"({label}) {artery_name}",
-            transform=ax.transAxes, ha="center", va="top", fontsize=14)
+    ax.text(
+        0.5,
+        -0.035,
+        f"({label}) {artery_name}",
+        transform=ax.transAxes,
+        ha="center",
+        va="top",
+        fontsize=14,
+    )
 
     fig.subplots_adjust(left=0.30, right=0.98, top=0.96, bottom=0.08)
 
     if save_basename:
-        fig.savefig(outdir / f"{save_basename}.png", dpi=600, bbox_inches="tight", pad_inches=0.1)
+        fig.savefig(
+            outdir / f"{save_basename}.png",
+            dpi=600,
+            bbox_inches="tight",
+            pad_inches=0.1,
+        )
         fig.savefig(outdir / f"{save_basename}.pdf", dpi=600, bbox_inches="tight")
     plt.show()
     plt.close(fig)
 
 
 # ============================== MODELING (Radial) ==============================
-def prepare_regression_data(features: pd.DataFrame, targets: pd.DataFrame) -> pd.DataFrame:
+def prepare_regression_data(
+    features: pd.DataFrame, targets: pd.DataFrame
+) -> pd.DataFrame:
     """Align once by unique subject ID; never infer correspondence from row order."""
     features = validate_subject_ids(features, "features")
     targets = validate_subject_ids(targets, "PWV.csv")
@@ -834,19 +1003,33 @@ def prepare_regression_data(features: pd.DataFrame, targets: pd.DataFrame) -> pd
     values = targets["PWV_cf [m/s]"]
     if not np.isfinite(values).all() or (values <= 0).any():
         raise ValueError("cf-PWV targets must be finite, positive and in m/s.")
-    merged = features.merge(targets[["Subject Number", "PWV_cf [m/s]"]],
-                            on="Subject Number", how="left", validate="one_to_one", indicator=True)
+    merged = features.merge(
+        targets[["Subject Number", "PWV_cf [m/s]"]],
+        on="Subject Number",
+        how="left",
+        validate="one_to_one",
+        indicator=True,
+    )
     if (merged["_merge"] != "both").any():
-        raise ValueError("Some retained feature subjects have no matching cf-PWV target.")
+        raise ValueError(
+            "Some retained feature subjects have no matching cf-PWV target."
+        )
     return merged.drop(columns="_merge").rename(columns={"PWV_cf [m/s]": "cf_pwv"})
 
 
-def train_cf_pwv_model(combined_results_rad: pd.DataFrame, pwv_csv: Path = PWV_CSV) -> None:
+def train_cf_pwv_model(
+    combined_results_rad: pd.DataFrame, pwv_csv: Path = PWV_CSV
+) -> None:
     merged_df = prepare_regression_data(combined_results_rad, pd.read_csv(pwv_csv))
     if len(merged_df) < 10:
-        raise ValueError("Five-fold regression needs at least ten retained subjects for fold R².")
-    X = (merged_df.drop(columns=["Subject Number", "Age", "cf_pwv"], errors="ignore")
-         .apply(pd.to_numeric, errors="raise").replace([np.inf, -np.inf], np.nan))
+        raise ValueError(
+            "Five-fold regression needs at least ten retained subjects for fold R²."
+        )
+    X = (
+        merged_df.drop(columns=["Subject Number", "Age", "cf_pwv"], errors="ignore")
+        .apply(pd.to_numeric, errors="raise")
+        .replace([np.inf, -np.inf], np.nan)
+    )
     if X.shape[1] == 0 or X.isna().all().all():
         raise ValueError("No usable regression features.")
     y = merged_df["cf_pwv"].reset_index(drop=True)
@@ -896,10 +1079,15 @@ def train_cf_pwv_model(combined_results_rad: pd.DataFrame, pwv_csv: Path = PWV_C
         )
         model.fit(X_train, y_train)
         y_pred = model.predict(X_test)
-        prediction_rows.extend({"Subject Number": int(merged_df.iloc[row]["Subject Number"]),
-                                "Fold": i, "Actual_cf_pwv_m_s": float(actual),
-                                "Predicted_cf_pwv_m_s": float(predicted)}
-                               for row, actual, predicted in zip(te, y_test, y_pred))
+        prediction_rows.extend(
+            {
+                "Subject Number": int(merged_df.iloc[row]["Subject Number"]),
+                "Fold": i,
+                "Actual_cf_pwv_m_s": float(actual),
+                "Predicted_cf_pwv_m_s": float(predicted),
+            }
+            for row, actual, predicted in zip(te, y_test, y_pred)
+        )
 
         mae = mean_absolute_error(y_test, y_pred)
         # Avoid the squared argument, which was removed in scikit-learn 1.6.
@@ -916,12 +1104,13 @@ def train_cf_pwv_model(combined_results_rad: pd.DataFrame, pwv_csv: Path = PWV_C
         fold_residuals.append(y_test.values - y_pred)
 
         pi = permutation_importance(
-            model, X_test, y_test,
-            n_repeats=10, random_state=RANDOM_STATE, n_jobs=1
+            model, X_test, y_test, n_repeats=10, random_state=RANDOM_STATE, n_jobs=1
         )
         perm_importances.append(pi.importances_mean)
 
-    pd.DataFrame(prediction_rows).to_csv(TAB_OUT_DIR / "out_of_fold_predictions.csv", index=False)
+    pd.DataFrame(prediction_rows).to_csv(
+        TAB_OUT_DIR / "out_of_fold_predictions.csv", index=False
+    )
     per_fold_df = pd.DataFrame(per_fold_rows)
     per_fold_print = per_fold_df.copy()
     for col in ["MAE", "RMSE", "R2"]:
@@ -939,7 +1128,11 @@ def train_cf_pwv_model(combined_results_rad: pd.DataFrame, pwv_csv: Path = PWV_C
     print("\nSummary:")
     print(summary)
 
-    per_fold_df.to_csv(TAB_OUT_DIR / "model_radial_per_fold_metrics.csv", index=False, float_format="%.3f")
+    per_fold_df.to_csv(
+        TAB_OUT_DIR / "model_radial_per_fold_metrics.csv",
+        index=False,
+        float_format="%.3f",
+    )
     with open(TAB_OUT_DIR / "model_radial_summary.txt", "w", encoding="utf-8") as f:
         f.write("Per-fold evaluation (Radial → cf-PWV)\n")
         f.write(per_fold_df.to_csv(index=False, float_format="%.3f"))
@@ -952,8 +1145,10 @@ def train_cf_pwv_model(combined_results_rad: pd.DataFrame, pwv_csv: Path = PWV_C
     all_pred = np.concatenate(fold_y_pred)
     pad = 0.5
     xlims_common = (all_actual.min() - pad, all_actual.max() + pad)
-    lim_both = (min(xlims_common[0], all_pred.min() - pad),
-                max(xlims_common[1], all_pred.max() + pad))
+    lim_both = (
+        min(xlims_common[0], all_pred.min() - pad),
+        max(xlims_common[1], all_pred.max() + pad),
+    )
 
     # Style constants
     fold_colors = ["#56B4E9", "#009E73", "#CC79A7", "#A65628", "#0072B2"]
@@ -968,10 +1163,26 @@ def train_cf_pwv_model(combined_results_rad: pd.DataFrame, pwv_csv: Path = PWV_C
 
     # A. Predicted vs Actual
     fig, ax = plt.subplots(figsize=(5.8, 5.8), dpi=600)
-    ax.plot(lim_both, lim_both, ls="--", c=ideal_line_color, lw=1.8, label="Ideal prediction")
+    ax.plot(
+        lim_both,
+        lim_both,
+        ls="--",
+        c=ideal_line_color,
+        lw=1.8,
+        label="Ideal prediction",
+    )
     for i, (yt, yp) in enumerate(zip(fold_y_test, fold_y_pred)):
-        ax.scatter(yt, yp, s=point_size_pred, c=fold_colors[i], marker=fold_markers[i],
-                   alpha=alpha_pred, edgecolors=edge_color, linewidths=edge_lw, label=f"Fold {i + 1}")
+        ax.scatter(
+            yt,
+            yp,
+            s=point_size_pred,
+            c=fold_colors[i],
+            marker=fold_markers[i],
+            alpha=alpha_pred,
+            edgecolors=edge_color,
+            linewidths=edge_lw,
+            label=f"Fold {i + 1}",
+        )
     ax.set_xlim(lim_both)
     ax.set_ylim(lim_both)
     ax.set_xlabel("Actual cf-PWV [m/s]")
@@ -979,9 +1190,22 @@ def train_cf_pwv_model(combined_results_rad: pd.DataFrame, pwv_csv: Path = PWV_C
     ax.set_aspect("equal", adjustable="box")
     ax.xaxis.set_major_locator(MaxNLocator(6))
     ax.yaxis.set_major_locator(MaxNLocator(6))
-    ax.legend(loc="lower center", bbox_to_anchor=(0.5, 1.03), ncol=3, frameon=True, fontsize=13)
-    fig.savefig(FIG_OUT_DIR / "predicted_vs_actual_cfPWV.png", dpi=600, bbox_inches="tight", pad_inches=0.1)
-    fig.savefig(FIG_OUT_DIR / "predicted_vs_actual_cfPWV.pdf", dpi=600, bbox_inches="tight")
+    ax.legend(
+        loc="lower center",
+        bbox_to_anchor=(0.5, 1.03),
+        ncol=3,
+        frameon=True,
+        fontsize=13,
+    )
+    fig.savefig(
+        FIG_OUT_DIR / "predicted_vs_actual_cfPWV.png",
+        dpi=600,
+        bbox_inches="tight",
+        pad_inches=0.1,
+    )
+    fig.savefig(
+        FIG_OUT_DIR / "predicted_vs_actual_cfPWV.pdf", dpi=600, bbox_inches="tight"
+    )
     plt.show()
     plt.close(fig)
 
@@ -990,8 +1214,17 @@ def train_cf_pwv_model(combined_results_rad: pd.DataFrame, pwv_csv: Path = PWV_C
     ax.axhline(0.0, c=ideal_line_color, ls="--", lw=1.8, label="Zero residual")
     for i, (yt, yp) in enumerate(zip(fold_y_test, fold_y_pred)):
         res = yt - yp
-        ax.scatter(yt, res, s=point_size_res, c=fold_colors[i], marker=fold_markers[i],
-                   alpha=alpha_res, edgecolors=edge_color, linewidths=edge_lw, label=f"Fold {i + 1}")
+        ax.scatter(
+            yt,
+            res,
+            s=point_size_res,
+            c=fold_colors[i],
+            marker=fold_markers[i],
+            alpha=alpha_res,
+            edgecolors=edge_color,
+            linewidths=edge_lw,
+            label=f"Fold {i + 1}",
+        )
     all_res = np.concatenate(fold_residuals)
     rng = np.max(np.abs(all_res)) * 1.1 if all_res.size else 1.0
     ax.set_ylim(-rng, rng)
@@ -1000,9 +1233,22 @@ def train_cf_pwv_model(combined_results_rad: pd.DataFrame, pwv_csv: Path = PWV_C
     ax.set_ylabel("Residual (Actual − Predicted) [m/s]")
     ax.xaxis.set_major_locator(MaxNLocator(6))
     ax.yaxis.set_major_locator(MaxNLocator(6))
-    ax.legend(loc="lower center", bbox_to_anchor=(0.5, 1.03), ncol=3, frameon=True, fontsize=13)
-    fig.savefig(FIG_OUT_DIR / "residuals_vs_actual_cfPWV.png", dpi=600, bbox_inches="tight", pad_inches=0.1)
-    fig.savefig(FIG_OUT_DIR / "residuals_vs_actual_cfPWV.pdf", dpi=600, bbox_inches="tight")
+    ax.legend(
+        loc="lower center",
+        bbox_to_anchor=(0.5, 1.03),
+        ncol=3,
+        frameon=True,
+        fontsize=13,
+    )
+    fig.savefig(
+        FIG_OUT_DIR / "residuals_vs_actual_cfPWV.png",
+        dpi=600,
+        bbox_inches="tight",
+        pad_inches=0.1,
+    )
+    fig.savefig(
+        FIG_OUT_DIR / "residuals_vs_actual_cfPWV.pdf", dpi=600, bbox_inches="tight"
+    )
     plt.show()
     plt.close(fig)
 
@@ -1010,7 +1256,7 @@ def train_cf_pwv_model(combined_results_rad: pd.DataFrame, pwv_csv: Path = PWV_C
     y_true_all = np.concatenate(fold_y_test)
     y_pred_all = np.concatenate(fold_y_pred)
     mean_vals = (y_pred_all + y_true_all) / 2.0
-    diff_vals = (y_pred_all - y_true_all)
+    diff_vals = y_pred_all - y_true_all
 
     bias = float(diff_vals.mean())
     sd = float(diff_vals.std(ddof=1))
@@ -1028,16 +1274,20 @@ def train_cf_pwv_model(combined_results_rad: pd.DataFrame, pwv_csv: Path = PWV_C
     except Exception:
         r_pb, p_pb = np.nan, np.nan
 
-    ba_df = pd.DataFrame({
-        "n": [diff_vals.size],
-        "Bias_mean_diff_m_per_s": [bias],
-        "SD_diff_m_per_s": [sd],
-        "LoA_lower_m_per_s": [loa_lower],
-        "LoA_upper_m_per_s": [loa_upper],
-        "Proportional_bias_r": [r_pb],
-        "Proportional_bias_p": [p_pb],
-    })
-    ba_df.to_csv(TAB_OUT_DIR / "bland_altman_summary.csv", index=False, float_format="%.3f")
+    ba_df = pd.DataFrame(
+        {
+            "n": [diff_vals.size],
+            "Bias_mean_diff_m_per_s": [bias],
+            "SD_diff_m_per_s": [sd],
+            "LoA_lower_m_per_s": [loa_lower],
+            "LoA_upper_m_per_s": [loa_upper],
+            "Proportional_bias_r": [r_pb],
+            "Proportional_bias_p": [p_pb],
+        }
+    )
+    ba_df.to_csv(
+        TAB_OUT_DIR / "bland_altman_summary.csv", index=False, float_format="%.3f"
+    )
     with open(TAB_OUT_DIR / "bland_altman_summary.txt", "w", encoding="utf-8") as f:
         f.write("Bland–Altman (Predicted − Reference) summary\n")
         f.write(f"n: {diff_vals.size}\n")
@@ -1050,13 +1300,24 @@ def train_cf_pwv_model(combined_results_rad: pd.DataFrame, pwv_csv: Path = PWV_C
     fig, ax = plt.subplots(figsize=(6.2, 4.8), dpi=600)
     for i, (yt, yp) in enumerate(zip(fold_y_test, fold_y_pred)):
         m = (yp + yt) / 2.0
-        d = (yp - yt)
-        ax.scatter(m, d, s=point_size_res, c=fold_colors[i], marker=fold_markers[i],
-                   alpha=alpha_res, edgecolors=edge_color, linewidths=edge_lw, label=f"Fold {i + 1}")
+        d = yp - yt
+        ax.scatter(
+            m,
+            d,
+            s=point_size_res,
+            c=fold_colors[i],
+            marker=fold_markers[i],
+            alpha=alpha_res,
+            edgecolors=edge_color,
+            linewidths=edge_lw,
+            label=f"Fold {i + 1}",
+        )
     xpad = 0.5
     xlims = (float(mean_vals.min() - xpad), float(mean_vals.max() + xpad))
     ax.set_xlim(xlims)
-    ax.fill_between([xlims[0], xlims[1]], loa_lower, loa_upper, color="0.7", alpha=0.12, zorder=0)
+    ax.fill_between(
+        [xlims[0], xlims[1]], loa_lower, loa_upper, color="0.7", alpha=0.12, zorder=0
+    )
     ax.axhline(bias, color=ideal_line_color, lw=1.8, label=f"Bias = {bias:+.3f} m/s")
     ax.axhline(loa_upper, color=ideal_line_color, lw=1.8, ls="--")
     ax.axhline(loa_lower, color=ideal_line_color, lw=1.8, ls="--")
@@ -1067,9 +1328,21 @@ def train_cf_pwv_model(combined_results_rad: pd.DataFrame, pwv_csv: Path = PWV_C
     handles, labels = ax.get_legend_handles_labels()
     handles.append(Line2D([0], [0], color=ideal_line_color, lw=1.8, ls="--"))
     labels.append("95% LoA")
-    ax.legend(handles, labels, loc="lower center", bbox_to_anchor=(0.5, 1.03),
-              ncol=3, frameon=True, fontsize=13)
-    fig.savefig(FIG_OUT_DIR / "bland_altman_cfPWV.png", dpi=600, bbox_inches="tight", pad_inches=0.1)
+    ax.legend(
+        handles,
+        labels,
+        loc="lower center",
+        bbox_to_anchor=(0.5, 1.03),
+        ncol=3,
+        frameon=True,
+        fontsize=13,
+    )
+    fig.savefig(
+        FIG_OUT_DIR / "bland_altman_cfPWV.png",
+        dpi=600,
+        bbox_inches="tight",
+        pad_inches=0.1,
+    )
     fig.savefig(FIG_OUT_DIR / "bland_altman_cfPWV.pdf", dpi=600, bbox_inches="tight")
     plt.show()
     plt.close(fig)
@@ -1083,14 +1356,24 @@ def train_cf_pwv_model(combined_results_rad: pd.DataFrame, pwv_csv: Path = PWV_C
         .reset_index(drop=True)
     )
 
-    fi_df.to_csv(TAB_OUT_DIR / "permutation_importance_all_features.csv", index=False, float_format="%.6f")
+    fi_df.to_csv(
+        TAB_OUT_DIR / "permutation_importance_all_features.csv",
+        index=False,
+        float_format="%.6f",
+    )
 
     topk = 10
     fi_top = fi_df.head(topk).iloc[::-1]  # reverse for barh
     fi_labels_disp = [label_for(k) for k in fi_top["Feature"]]
 
     fig, ax = plt.subplots(figsize=(8.6, 3.5), dpi=600)
-    ax.barh(fi_labels_disp, fi_top["Importance"], color="#4C78A8", edgecolor="none", height=0.68)
+    ax.barh(
+        fi_labels_disp,
+        fi_top["Importance"],
+        color="#4C78A8",
+        edgecolor="none",
+        height=0.68,
+    )
     ax.set_xlabel("Permutation importance", fontsize=13, labelpad=6)
     ax.set_ylabel("Feature", fontsize=12, labelpad=8)
     ax.tick_params(axis="y", labelsize=11)
@@ -1103,15 +1386,32 @@ def train_cf_pwv_model(combined_results_rad: pd.DataFrame, pwv_csv: Path = PWV_C
         ax.set_xlim(lower - padding, upper + padding)
     ax.axvline(0, color="0.5", linewidth=1)
     fig.subplots_adjust(left=0.27, right=0.98, bottom=0.22, top=0.96)
-    fig.savefig(FIG_OUT_DIR / "feature_importance_cfPWV.png", dpi=600, bbox_inches="tight", pad_inches=0.1)
-    fig.savefig(FIG_OUT_DIR / "feature_importance_cfPWV.pdf", dpi=600, bbox_inches="tight")
+    fig.savefig(
+        FIG_OUT_DIR / "feature_importance_cfPWV.png",
+        dpi=600,
+        bbox_inches="tight",
+        pad_inches=0.1,
+    )
+    fig.savefig(
+        FIG_OUT_DIR / "feature_importance_cfPWV.pdf", dpi=600, bbox_inches="tight"
+    )
     plt.show()
     plt.close(fig)
 
 
 # ============================== MAIN ==============================
 def main() -> None:
-    _require_files([DIG_PWS_CSV, RAD_PWS_CSV, BRACH_PWS_CSV, DIG_IDX_CSV, RAD_IDX_CSV, BRACH_IDX_CSV, PWV_CSV])
+    _require_files(
+        [
+            DIG_PWS_CSV,
+            RAD_PWS_CSV,
+            BRACH_PWS_CSV,
+            DIG_IDX_CSV,
+            RAD_IDX_CSV,
+            BRACH_IDX_CSV,
+            PWV_CSV,
+        ]
+    )
 
     FIG_OUT_DIR.mkdir(parents=True, exist_ok=True)
     TAB_OUT_DIR.mkdir(parents=True, exist_ok=True)
@@ -1127,10 +1427,14 @@ def main() -> None:
     combined_results_rad = build_feature_table(dfrad, idx_rad, "Radial")
     combined_results_brach = build_feature_table(dfbra, idx_bra, "Brachial")
 
-    for site, features in [("digital", combined_results_dig), ("radial", combined_results_rad),
-                           ("brachial", combined_results_brach)]:
-        pd.DataFrame(features.attrs["exclusions"], columns=["Subject Number", "Reason"]).to_csv(
-            TAB_OUT_DIR / f"excluded_subjects_{site}.csv", index=False)
+    for site, features in [
+        ("digital", combined_results_dig),
+        ("radial", combined_results_rad),
+        ("brachial", combined_results_brach),
+    ]:
+        pd.DataFrame(
+            features.attrs["exclusions"], columns=["Subject Number", "Reason"]
+        ).to_csv(TAB_OUT_DIR / f"excluded_subjects_{site}.csv", index=False)
 
     combined_results_dig = map_age(combined_results_dig, idx_dig)
     combined_results_rad = map_age(combined_results_rad, idx_rad)
@@ -1138,7 +1442,9 @@ def main() -> None:
 
     combined_results_dig.to_csv(TAB_OUT_DIR / "combined_result_dig.csv", index=False)
     combined_results_rad.to_csv(TAB_OUT_DIR / "combined_result_rad.csv", index=False)
-    combined_results_brach.to_csv(TAB_OUT_DIR / "combined_result_brach.csv", index=False)
+    combined_results_brach.to_csv(
+        TAB_OUT_DIR / "combined_result_brach.csv", index=False
+    )
 
     sig_dig, nonsig_dig = correlate_features(combined_results_dig)
     sig_rad, nonsig_rad = correlate_features(combined_results_rad)
@@ -1148,15 +1454,23 @@ def main() -> None:
     sig_rad.to_csv(TAB_OUT_DIR / "corr_radial_significant.csv", index=False)
     sig_brach.to_csv(TAB_OUT_DIR / "corr_brachial_significant.csv", index=False)
 
-    nonsig_dig.to_csv(TAB_OUT_DIR / "corr_digital_nonsignificant_removed.csv", index=False)
-    nonsig_rad.to_csv(TAB_OUT_DIR / "corr_radial_nonsignificant_removed.csv", index=False)
-    nonsig_brach.to_csv(TAB_OUT_DIR / "corr_brachial_nonsignificant_removed.csv", index=False)
+    nonsig_dig.to_csv(
+        TAB_OUT_DIR / "corr_digital_nonsignificant_removed.csv", index=False
+    )
+    nonsig_rad.to_csv(
+        TAB_OUT_DIR / "corr_radial_nonsignificant_removed.csv", index=False
+    )
+    nonsig_brach.to_csv(
+        TAB_OUT_DIR / "corr_brachial_nonsignificant_removed.csv", index=False
+    )
 
     report_removed(nonsig_dig, "Digital")
     report_removed(nonsig_rad, "Radial")
     report_removed(nonsig_brach, "Brachial")
 
-    plot_age_trajectories(combined_results_dig, combined_results_rad, combined_results_brach)
+    plot_age_trajectories(
+        combined_results_dig, combined_results_rad, combined_results_brach
+    )
     plot_corr_bars(sig_dig, "a", "Digital", save_basename="corr_digital")
     plot_corr_bars(sig_rad, "b", "Radial", save_basename="corr_radial")
     plot_corr_bars(sig_brach, "c", "Brachial", save_basename="corr_brachial")
