@@ -1,0 +1,62 @@
+{
+  "dataset": "PWDB v0.2, Zenodo 3275625",
+  "status": "completed",
+  "paper_reproduction_verified": false,
+  "code_sha256": "3782e496f802e22bdee78bf63d35d87230db23c6ed63a17237ad077fd96cde96",
+  "feature_engine": "Unmodified build_feature_table, map_age, correlate_features and prepare_regression_data from paper_code.py",
+  "regression": "5 folds; cf-PWV deciles; seed 42; 400 trees; learning_rate .05; max_depth 5; squared-error loss; n_jobs 1",
+  "input_sha256": {
+    "PWV.csv": "29fd714acc7ec9346737122f4a2ced18a52bb11975176e43488202631730e135",
+    "PWs_Brachial_PPG.csv": "8976dfc2d92446770f1228cb1e69e18aace5bde633921a6c7e6076a3189cc908",
+    "PWs_Digital_PPG.csv": "48041c6523f4ea314b29ee72b84fe97a0aaeb82461589df068c015cd5c432a06",
+    "PWs_Radial_PPG.csv": "6ae0dcdd818f9e62a18a7b1245ab65c944e2938fa0cdae08a3886ece189d0cc8",
+    "brachfeatures.csv": "5f190caee54435b3c3907c8fea944a5fa815e7acbf720526c91f27a88568afe7",
+    "digfeatures.csv": "6d5fbbc40f019ccc12f21e2d1784853effc6319949fb5dfbf3fc4feec49036d0",
+    "radfeature.csv": "a8cfa5c23b6bee7433ba385e17b01390b9d51ae643cb97a71471c707fde71674"
+  },
+  "environment": {
+    "python": "3.12.14",
+    "numpy": "2.3.5",
+    "pandas": "2.2.3",
+    "scipy": "1.17.0",
+    "scikit_learn": "1.8.0",
+    "xgboost": "3.0.2"
+  },
+  "seconds": 128.58940839767456,
+  "feature_count": 60,
+  "retained_subjects": {
+    "digital": 4328,
+    "radial": 4333,
+    "brachial": 4374
+  },
+  "missing_derived_feature_cells": 0,
+  "missing_handling": "Native XGBoost missing-value handling, as in repository code",
+  "metrics": {
+    "mae_m_s": {
+      "mean": 0.11570819427375167,
+      "sd_ddof0_paper_code": 0.004593775470056935,
+      "sd_ddof1": 0.0051359971122091775
+    },
+    "rmse_m_s": {
+      "mean": 0.180949015353356,
+      "sd_ddof0_paper_code": 0.011585856487828443,
+      "sd_ddof1": 0.012953381342170682
+    },
+    "r2": {
+      "mean": 0.9925363249352008,
+      "sd_ddof0_paper_code": 0.0010091794401059146,
+      "sd_ddof1": 0.0011282969147860015
+    },
+    "baseline_rmse_m_s": {
+      "mean": 2.0998101667643594,
+      "sd_ddof0_paper_code": 0.025772510921233213,
+      "sd_ddof1": 0.028814543185366595
+    }
+  },
+  "checkpoint_validation": "Native Booster reload predictions exactly match all original held-out predictions",
+  "bland_altman": {
+    "bias_m_s": -0.0016613108473178479,
+    "lower_loa_m_s": -0.3570798928742177,
+    "upper_loa_m_s": 0.353757271179582
+  }
+}

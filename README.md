@@ -1,5 +1,7 @@
 # PPG Feature Analysis and cf-PWV Regression
 
+[![Checks](https://github.com/KianaAbrisham/ppg-cfpwv-ieee-access/actions/workflows/checks.yml/badge.svg?branch=main)](https://github.com/KianaAbrisham/ppg-cfpwv-ieee-access/actions/workflows/checks.yml)
+
 Research code for PPG/SDPPG feature extraction, exploratory age associations and XGBoost
 regression of carotid–femoral pulse wave velocity (cf-PWV).
 
@@ -8,9 +10,17 @@ Feature Analysis and Machine Learning-Based Estimation of Carotid-Femoral Pulse 
 (IEEE Access, 2025). [DOI](https://doi.org/10.1109/ACCESS.2025.3626252) ·
 [IEEE Xplore](https://ieeexplore.ieee.org/abstract/document/11218839).
 
-This repository requires the original study CSV exports or an independently verified conversion.
-They are not included. The input checks and a synthetic regression run have been tested;
-**full reproduction of the paper's results has not been established**.
+A verified converter now prepares the public PWDB release, and a full five-fold radial cf-PWV evaluation has been completed on 4,333 eligible virtual subjects. The current run closely matches the paper's main regression metrics, with small numerical differences. [Results, predictions and commands](docs/PUBLIC_DATA_VALIDATION.md) are documented; full-paper reproduction is not claimed.
+
+## Public-data results
+
+| Metric | Current mean | Current fold SD | Paper mean |
+| --- | ---: | ---: | ---: |
+| MAE (m/s) | 0.115708 | 0.004594 | 0.115 |
+| RMSE (m/s) | 0.180949 | 0.011586 | 0.180 |
+| R² | 0.992536 | 0.001009 | 0.993 |
+
+These are new results from the current code on PWDB v0.2. See the [validation report](docs/PUBLIC_DATA_VALIDATION.md) for the exact protocol and limits.
 
 ## What the code does
 
@@ -22,9 +32,8 @@ They are not included. The input checks and a synthetic regression run have been
 
 ## Required input
 
-The related dataset is [PWDB on Zenodo](https://zenodo.org/records/2633175), an in-silico pulse-wave database.
-Downloading the source dataset alone does not create the seven project-specific CSV exports below.
-This repository does not currently provide a validated source-to-CSV converter or fiducial extractor.
+The related dataset is [PWDB on Zenodo](https://zenodo.org/records/3275625), an in-silico pulse-wave database.
+A [verified downloader and converter](docs/PUBLIC_DATA.md) creates the seven input files below from the official source. It preserves subject IDs and uses the database's provided fiducials.
 
 Run from the repository root and place these files in `data/`:
 
@@ -76,8 +85,7 @@ Correlation p-values are unadjusted for multiple comparisons. The feature named
 `Rise–Decay Time Ratio` retains the original **decay/rise** calculation. Amplitude is half the
 peak-to-peak range. Legacy geometric-length features mix time and amplitude coordinates and are
 scale-dependent descriptors, not physical distances. Signal amplitude units are inherited from the
-input; they are not assumed to be volts. These definitions and the original export convention still
-need to be checked against the study data before interpreting research results.
+input; they are not assumed to be volts. The public-source export convention has now been checked against the official PWDB files; the [validation report](docs/PUBLIC_DATA_VALIDATION.md) records remaining differences from the publication.
 
 ## Install and run
 
@@ -98,7 +106,7 @@ python paper_code.py
 
 Tests use artificial fixtures and do not need the study CSVs. The final command does require them.
 Outputs go to `outputs/figures/` and `outputs/tables/`; another run overwrites files with the same names.
-The script does not save a deployable model or provide inference for new subjects.
+The original plotting script does not save models. The [public-data validation runner](docs/PUBLIC_DATA_VALIDATION.md) additionally saves and verifies five native fold checkpoints; these are evaluation models, not a clinical deployment.
 See [validation](docs/VALIDATION.md) for the checks actually completed.
 
 ## License

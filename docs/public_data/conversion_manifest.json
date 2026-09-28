@@ -1,0 +1,93 @@
+{
+  "source_record": "3275625",
+  "version": "0.2.0",
+  "source_kind": "in_silico_virtual_healthy_adults",
+  "sampling_rate_hz": 500,
+  "signal_units": "arbitrary units",
+  "cfpwv_units": "m/s",
+  "subject_alignment": "explicit Subject Number, sorted by ID; no positional joins",
+  "transformations": "strip header whitespace; rename columns; preserve all waveform values and trailing NaNs",
+  "inputs": [
+    {
+      "name": "PWs_csv.zip",
+      "url": "https://zenodo.org/api/records/3275625/files/PWs_csv.zip/content",
+      "md5": "81067f96d6078bbbb5cd9fce5d73f5bd",
+      "sha256": "16d4f0af22faa318e91c4637a673f5a881841dd6eb225bca743daab5db73f12c",
+      "bytes": 242811114
+    },
+    {
+      "name": "pwdb_haemod_params.csv",
+      "url": "https://zenodo.org/api/records/3275625/files/pwdb_haemod_params.csv/content",
+      "md5": "43e1244665e6cee6b77501102404b70a",
+      "sha256": "a7d9a94d3ef69497cb18f277374eb4fa95f30f2e137cbafe0ac3d03c3223695e",
+      "bytes": 927139
+    },
+    {
+      "name": "pwdb_pw_indices.csv",
+      "url": "https://zenodo.org/api/records/3275625/files/pwdb_pw_indices.csv/content",
+      "md5": "87946898d39d5a6d894901ad39f6b546",
+      "sha256": "4a35c0fe6f7ed6942e9b7bb1f0230ecba3541971a8f840879130a53af5086a08",
+      "bytes": 19657613
+    }
+  ],
+  "sites": {
+    "digital": {
+      "subjects": 4374,
+      "min_samples": 337,
+      "max_samples": 487,
+      "archive_member": "csv/PWs_Digital_PPG.csv",
+      "raw_sha256": "50626e4f2dcc42ba8a550ef5261c33908bb912e712f0b24b4ce8017c9fd0814a",
+      "signals_sha256": "19122e5c0bae3ab01545d2d1f1cbb9062eef1de743b3d0d96a6e5d1a62a54cca",
+      "nonfinite_systolic_times": 46
+    },
+    "radial": {
+      "subjects": 4374,
+      "min_samples": 337,
+      "max_samples": 487,
+      "archive_member": "csv/PWs_Radial_PPG.csv",
+      "raw_sha256": "1a6de4ddd6fdcda02034ed29c060bca313c975aaebf3c8d21a082070571a4e17",
+      "signals_sha256": "7c99298df3dae0b1a2da3b33d12f0175807e32563b7bc44c9b15b21397cf2df5",
+      "nonfinite_systolic_times": 41
+    },
+    "brachial": {
+      "subjects": 4374,
+      "min_samples": 337,
+      "max_samples": 487,
+      "archive_member": "csv/PWs_Brachial_PPG.csv",
+      "raw_sha256": "582d3944f77aa68b523d9e8aa626015df44f65e0a3f0e822f5bb2916b9da46a4",
+      "signals_sha256": "7d88e0c9cea7c2f3ed994c7996b7a641d9dfd591944d28dfa50516b01c2b2211",
+      "nonfinite_systolic_times": 0
+    }
+  },
+  "age_counts": {
+    "25": 729,
+    "35": 729,
+    "45": 729,
+    "55": 729,
+    "65": 729,
+    "75": 729
+  },
+  "cfpwv_range_m_s": [
+    4.5551,
+    16.195
+  ],
+  "recommended_length": 487,
+  "paper_reproduction_verified": false,
+  "outputs": {
+    "deep-learning/targets_cf.csv": "f67c19d05237d8e00bf000c0b9cb2da616100c82b143db44ba49e599d912c853",
+    "deep-learning/targets_age.csv": "24a83b59b2b3c1ec82b887892591b7f3c94d03bff1e7f63addacc2c55eb60635",
+    "ieee/data/PWs_Radial_PPG.csv": "6ae0dcdd818f9e62a18a7b1245ab65c944e2938fa0cdae08a3886ece189d0cc8",
+    "ieee/data/PWs_Brachial_PPG.csv": "8976dfc2d92446770f1228cb1e69e18aace5bde633921a6c7e6076a3189cc908",
+    "ieee/data/digfeatures.csv": "6d5fbbc40f019ccc12f21e2d1784853effc6319949fb5dfbf3fc4feec49036d0",
+    "ieee/data/radfeature.csv": "a8cfa5c23b6bee7433ba385e17b01390b9d51ae643cb97a71471c707fde71674",
+    "ieee/data/PWV.csv": "29fd714acc7ec9346737122f4a2ced18a52bb11975176e43488202631730e135",
+    "ieee/data/brachfeatures.csv": "5f190caee54435b3c3907c8fea944a5fa815e7acbf720526c91f27a88568afe7",
+    "ieee/data/PWs_Digital_PPG.csv": "48041c6523f4ea314b29ee72b84fe97a0aaeb82461589df068c015cd5c432a06",
+    "deep-learning/brachial/signal_lengths.csv": "dc9bd9e8ed5c837a5fdc8157f174ed798836fe1eff47a26ab78adf70f87f0bc4",
+    "deep-learning/brachial/signals.csv": "7d88e0c9cea7c2f3ed994c7996b7a641d9dfd591944d28dfa50516b01c2b2211",
+    "deep-learning/digital/signal_lengths.csv": "e9e6d2eb1822f7bb5d4a118eaaeade5f37f29d04d97968d6e9d176b10899f639",
+    "deep-learning/digital/signals.csv": "19122e5c0bae3ab01545d2d1f1cbb9062eef1de743b3d0d96a6e5d1a62a54cca",
+    "deep-learning/radial/signal_lengths.csv": "61f6be1cce870be65b817bee40894c4e9026bd6882266ac2bf3b319832051f8a",
+    "deep-learning/radial/signals.csv": "7c99298df3dae0b1a2da3b33d12f0175807e32563b7bc44c9b15b21397cf2df5"
+  }
+}

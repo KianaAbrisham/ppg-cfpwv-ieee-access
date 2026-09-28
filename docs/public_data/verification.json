@@ -1,0 +1,15 @@
+{
+  "status": "passed",
+  "checks": [
+    {
+      "site": "radial",
+      "model": "xgboost",
+      "folds": 5,
+      "oof_subjects": 4333,
+      "split_isolation": "passed",
+      "scores_recomputed": "passed",
+      "target_alignment": "passed",
+      "saved_inference": "Native Booster reload predictions exactly match all original held-out predictions"
+    }
+  ]
+}
