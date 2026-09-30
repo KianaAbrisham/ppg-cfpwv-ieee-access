@@ -46,4 +46,4 @@ Data conversion alone does not establish reproduction of a paper's numerical res
 - [Official PWDB format documentation](https://github.com/peterhcharlton/pwdb/wiki/PWs).
 - [Database publication and project](https://peterhcharlton.github.io/pwdb/).
 
-The original data remain with their publisher and retain their original terms. The repository's software license does not relicense PWDB data.
+The original data remain with their publisher and retain their original terms.

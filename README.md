@@ -106,14 +106,10 @@ python paper_code.py
 
 Tests use artificial fixtures and do not need the study CSVs. The final command does require them.
 Outputs go to `outputs/figures/` and `outputs/tables/`; another run overwrites files with the same names.
-The original plotting script does not save models. The [public-data validation runner](docs/PUBLIC_DATA_VALIDATION.md) additionally saves and verifies five native fold checkpoints; these are evaluation models, not a clinical deployment.
+For numerical evaluation without the large publication figures, use the [public-data validation runner](docs/PUBLIC_DATA_VALIDATION.md). It saves and verifies five native fold checkpoints. The original plotting script produces the publication figures and does not save models.
 See [validation](docs/VALIDATION.md) for the checks actually completed.
 
-## Research code and validation work
-
-The feature-analysis script comes from Kiana Pilevar Abrisham's research associated with the cited IEEE Access paper. Later implementation changes, input-integrity checks, documentation, data conversion, and the recorded numerical validation were completed with AI coding assistance. The public-data runner uses the feature extraction identified by the source commit and hash in its [validation report](docs/PUBLIC_DATA_VALIDATION.md).
-
-Recorded checks were run in a hosted Linux CPU environment. See the [portfolio development notes](https://github.com/KianaAbrisham/KianaAbrisham/blob/main/docs/DEVELOPMENT.md) for execution provenance and the scope of AI assistance.
+[Development notes](https://github.com/KianaAbrisham/KianaAbrisham/blob/main/docs/DEVELOPMENT.md)
 
 ## License
 
